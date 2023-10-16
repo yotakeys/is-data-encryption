@@ -20,20 +20,25 @@ type UserController interface {
 }
 
 type userController struct {
-	jwtService service.JWTService
+	jwtService  service.JWTService
 	userService service.UserService
 }
 
 func NewUserController(us service.UserService, jwts service.JWTService) UserController {
 	return &userController{
 		userService: us,
-		jwtService: jwts,
+		jwtService:  jwts,
 	}
 }
 
-func(uc *userController) RegisterUser(ctx *gin.Context) {
+func (uc *userController) RegisterUser(ctx *gin.Context) {
 	var user dto.UserCreateDto
 	err := ctx.ShouldBind(&user)
+	if err != nil {
+		res := common.BuildErrorResponse("Gagal Memproses Request", err.Error(), common.EmptyObj{})
+		ctx.JSON(http.StatusBadRequest, res)
+		return
+	}
 	checkUser, _ := uc.userService.CheckUser(ctx.Request.Context(), user.Email)
 	if checkUser {
 		res := common.BuildErrorResponse("User Sudah Terdaftar", "false", common.EmptyObj{})
@@ -51,7 +56,7 @@ func(uc *userController) RegisterUser(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, res)
 }
 
-func(uc *userController) GetAllUser(ctx *gin.Context) {
+func (uc *userController) GetAllUser(ctx *gin.Context) {
 	result, err := uc.userService.GetAllUser(ctx.Request.Context())
 	if err != nil {
 		res := common.BuildErrorResponse("Gagal Mendapatkan List User", err.Error(), common.EmptyObj{})
@@ -63,33 +68,37 @@ func(uc *userController) GetAllUser(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, res)
 }
 
-func(uc *userController) LoginUser(ctx *gin.Context) {
+func (uc *userController) LoginUser(ctx *gin.Context) {
 	var userLoginDTO dto.UserLoginDTO
 	err := ctx.ShouldBind(&userLoginDTO)
+	if err != nil {
+		response := common.BuildErrorResponse("Gagal Memproses Request", err.Error(), common.EmptyObj{})
+		ctx.AbortWithStatusJSON(http.StatusBadRequest, response)
+		return
+	}
 	res, _ := uc.userService.Verify(ctx.Request.Context(), userLoginDTO.Email, userLoginDTO.Password)
 	if !res {
 		response := common.BuildErrorResponse("Gagal Login", "Email atau Password Salah", common.EmptyObj{})
 		ctx.AbortWithStatusJSON(http.StatusBadRequest, response)
 		return
 	}
-	
+
 	user, err := uc.userService.FindUserByEmail(ctx.Request.Context(), userLoginDTO.Email)
 	if err != nil {
 		response := common.BuildErrorResponse("Gagal Login", err.Error(), common.EmptyObj{})
 		ctx.AbortWithStatusJSON(http.StatusBadRequest, response)
 		return
 	}
-	token := uc.jwtService.GenerateToken(user.ID, user.Role)
+	token := uc.jwtService.GenerateToken(user.ID)
 	userResponse := entity.Authorization{
 		Token: token,
-		Role: user.Role,
 	}
-	
+
 	response := common.BuildResponse(true, "Berhasil Login", userResponse)
 	ctx.JSON(http.StatusOK, response)
 }
 
-func(uc *userController) DeleteUser(ctx *gin.Context) {
+func (uc *userController) DeleteUser(ctx *gin.Context) {
 	token := ctx.MustGet("token").(string)
 	userID, err := uc.jwtService.GetUserIDByToken(token)
 	// ctx.Set("token", "")
@@ -109,7 +118,7 @@ func(uc *userController) DeleteUser(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, res)
 }
 
-func(uc *userController) UpdateUser(ctx *gin.Context) {
+func (uc *userController) UpdateUser(ctx *gin.Context) {
 	var user dto.UserUpdateDto
 	err := ctx.ShouldBind(&user)
 	if err != nil {
@@ -117,7 +126,7 @@ func(uc *userController) UpdateUser(ctx *gin.Context) {
 		ctx.JSON(http.StatusBadRequest, res)
 		return
 	}
-	
+
 	token := ctx.MustGet("token").(string)
 	userID, err := uc.jwtService.GetUserIDByToken(token)
 	if err != nil {
@@ -137,7 +146,7 @@ func(uc *userController) UpdateUser(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, res)
 }
 
-func(uc *userController) MeUser(ctx *gin.Context) {
+func (uc *userController) MeUser(ctx *gin.Context) {
 	token := ctx.MustGet("token").(string)
 	userID, err := uc.jwtService.GetUserIDByToken(token)
 	if err != nil {
