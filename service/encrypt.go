@@ -45,18 +45,18 @@ func (us *encryptService) CreateEncrypt(ctx *gin.Context, encryptDTO dto.Encrypt
 		if err != nil || data == nil {
 			return entity.Encrypt{}, err
 		}
-		encrypten_phone, data, err := encrypt.AESEncrypt(encryptDTO.PhoneNumber)
+		encrypten_phone, data, err := encrypt.RC4Encrypt(encryptDTO.PhoneNumber)
 		encryptDTO.PhoneNumber = encrypten_phone
 		if err != nil || data == nil {
 			return entity.Encrypt{}, err
 		}
 	} else if encryptMethod == "DES" {
-		encrypten_name, data, err := encrypt.RC4Encrypt(encryptDTO.Name)
+		encrypten_name, data, err := encrypt.DESEncrypt(encryptDTO.Name)
 		encryptDTO.Name = encrypten_name
 		if err != nil || data == nil {
 			return entity.Encrypt{}, err
 		}
-		encrypten_phone, data, err := encrypt.AESEncrypt(encryptDTO.PhoneNumber)
+		encrypten_phone, data, err := encrypt.DESEncrypt(encryptDTO.PhoneNumber)
 		encryptDTO.PhoneNumber = encrypten_phone
 		if err != nil || data == nil {
 			return entity.Encrypt{}, err
@@ -86,5 +86,50 @@ func (us *encryptService) CreateEncrypt(ctx *gin.Context, encryptDTO dto.Encrypt
 }
 
 func (us *encryptService) GetAllEncrypt(ctx context.Context, userID uuid.UUID) ([]entity.Encrypt, error) {
-	return us.encryptRepository.GetAllEncrypt(ctx, userID)
+
+	datas, err := us.encryptRepository.GetAllEncrypt(ctx, userID)
+
+	if err != nil {
+		return nil, err
+	}
+
+	for i, data := range datas {
+		if data.EncryptMethod == "AES" {
+			decrypt_name, err := encrypt.AESDecrypt(data.Name)
+			if err != nil {
+				return nil, err
+			}
+			decrypt_phone, err := encrypt.AESDecrypt(data.PhoneNumber)
+			if err != nil {
+				return nil, err
+			}
+			datas[i].Name = decrypt_name
+			datas[i].PhoneNumber = decrypt_phone
+		} else if data.EncryptMethod == "RC4" {
+			decrypt_name, err := encrypt.RC4Decrypt(data.Name)
+			if err != nil {
+				return nil, err
+			}
+			decrypt_phone, err := encrypt.RC4Decrypt(data.PhoneNumber)
+			if err != nil {
+				return nil, err
+			}
+			datas[i].Name = decrypt_name
+			datas[i].PhoneNumber = decrypt_phone
+
+		} else if data.EncryptMethod == "DES" {
+			decrypt_name, err := encrypt.DESDecrypt(data.Name)
+			if err != nil {
+				return nil, err
+			}
+			decrypt_phone, err := encrypt.DESDecrypt(data.PhoneNumber)
+			if err != nil {
+				return nil, err
+			}
+			datas[i].Name = decrypt_name
+			datas[i].PhoneNumber = decrypt_phone
+		}
+	}
+
+	return datas, nil
 }

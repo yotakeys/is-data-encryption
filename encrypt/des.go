@@ -18,7 +18,7 @@ func DESEncrypt(stringToEncrypt string) (encryptedString string, data map[string
 
 	time.Sleep(1 * time.Second)
 
-	key, _ := hex.DecodeString(os.Getenv("ENCRYPT_KEY"))
+	key := []byte(os.Getenv("ENCRYPT_KEY_DES"))
 	plaintext := []byte(stringToEncrypt)
 
 	if len(key) != 8 {
@@ -52,7 +52,7 @@ func DESEncrypt(stringToEncrypt string) (encryptedString string, data map[string
 
 // Decrypt data using DES with PKCS7 padding
 func DESDecrypt(encryptedString string) (decryptedString string, err error) {
-	key := []byte(os.Getenv("ENCRYPT_KEY"))
+	key := []byte(os.Getenv("ENCRYPT_KEY_DES"))
 	enc, _ := hex.DecodeString(encryptedString)
 
 	if len(key) != 8 {
