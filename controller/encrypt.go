@@ -67,7 +67,7 @@ func (uc *encryptController) CreateEncrypt(ctx *gin.Context) {
 
 	// AES
 
-	resultAES, err := uc.encryptService.CreateEncrypt(ctx, encrypt, userID, "AES", "1s")
+	resultAES, err := uc.encryptService.CreateEncrypt(ctx, encrypt, userID, "AES")
 	if err != nil {
 		res := common.BuildErrorResponse("Gagal Menambahkan Encrypt", err.Error(), common.EmptyObj{})
 		ctx.JSON(http.StatusBadRequest, res)
@@ -76,7 +76,7 @@ func (uc *encryptController) CreateEncrypt(ctx *gin.Context) {
 
 	// RC4
 
-	resultRC4, err := uc.encryptService.CreateEncrypt(ctx, encrypt2, userID, "RC4", "1s")
+	resultRC4, err := uc.encryptService.CreateEncrypt(ctx, encrypt2, userID, "RC4")
 	if err != nil {
 		res := common.BuildErrorResponse("Gagal Menambahkan Encrypt", err.Error(), common.EmptyObj{})
 		ctx.JSON(http.StatusBadRequest, res)
@@ -85,7 +85,7 @@ func (uc *encryptController) CreateEncrypt(ctx *gin.Context) {
 
 	// DES
 
-	resultDES, err := uc.encryptService.CreateEncrypt(ctx, encrypt3, userID, "DES", "1s")
+	resultDES, err := uc.encryptService.CreateEncrypt(ctx, encrypt3, userID, "DES")
 	if err != nil {
 		res := common.BuildErrorResponse("Gagal Menambahkan Encrypt", err.Error(), common.EmptyObj{})
 		ctx.JSON(http.StatusBadRequest, res)

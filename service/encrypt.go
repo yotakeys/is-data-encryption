@@ -7,13 +7,14 @@ import (
 	"gin-gorm-clean-template/entity"
 	"gin-gorm-clean-template/repository"
 	"math/rand"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 )
 
 type EncryptService interface {
-	CreateEncrypt(ctx *gin.Context, encryptDTO dto.EncryptCreateDto, userID uuid.UUID, encryptMethod string, encryptTime string) (entity.Encrypt, error)
+	CreateEncrypt(ctx *gin.Context, encryptDTO dto.EncryptCreateDto, userID uuid.UUID, encryptMethod string) (entity.Encrypt, error)
 	GetAllEncrypt(ctx context.Context, userID uuid.UUID) ([]entity.Encrypt, error)
 }
 
@@ -37,7 +38,7 @@ func RandStringBytesRmndr(n int) string {
 	return string(b)
 }
 
-func (us *encryptService) CreateEncrypt(ctx *gin.Context, encryptDTO dto.EncryptCreateDto, userID uuid.UUID, encryptMethod string, encryptTime string) (entity.Encrypt, error) {
+func (us *encryptService) CreateEncrypt(ctx *gin.Context, encryptDTO dto.EncryptCreateDto, userID uuid.UUID, encryptMethod string) (entity.Encrypt, error) {
 
 	encryptDTO.IDCard.Filename = "uploads/id-card/" + RandStringBytesRmndr(5) + encryptDTO.IDCard.Filename
 	encryptDTO.CV.Filename = "uploads/cv/" + RandStringBytesRmndr(5) + encryptDTO.CV.Filename
@@ -47,32 +48,74 @@ func (us *encryptService) CreateEncrypt(ctx *gin.Context, encryptDTO dto.Encrypt
 	ctx.SaveUploadedFile(encryptDTO.CV, encryptDTO.CV.Filename)
 	ctx.SaveUploadedFile(encryptDTO.Video, encryptDTO.Video.Filename)
 
+	var encryptTime float64
+
 	if encryptMethod == "AES" {
 		encrypten_name, data, err := encrypt.AESEncrypt(encryptDTO.Name)
-		encryptDTO.Name = encrypten_name
 		if err != nil || data == nil {
 			return entity.Encrypt{}, err
 		}
+		floatNumber, err := strconv.ParseFloat(data["elapsed"].(string)[:len(data["elapsed"].(string))-1], 64)
+		if err != nil || data == nil {
+			return entity.Encrypt{}, err
+		}
+		encryptTime = encryptTime + floatNumber
+
+		encryptDTO.Name = encrypten_name
 
 		encrypten_phone, data, err := encrypt.AESEncrypt(encryptDTO.PhoneNumber)
+
+		if err != nil || data == nil {
+			return entity.Encrypt{}, err
+		}
+		floatNumber, err = strconv.ParseFloat(data["elapsed"].(string)[:len(data["elapsed"].(string))-1], 64)
+		if err != nil || data == nil {
+			return entity.Encrypt{}, err
+		}
+		encryptTime = encryptTime + floatNumber
+
 		encryptDTO.PhoneNumber = encrypten_phone
 		if err != nil || data == nil {
 			return entity.Encrypt{}, err
 		}
 
 		encrypted_path_idcard, data, err := encrypt.AESEncrypt(encryptDTO.IDCard.Filename)
+		if err != nil || data == nil {
+			return entity.Encrypt{}, err
+		}
+		floatNumber, err = strconv.ParseFloat(data["elapsed"].(string)[:len(data["elapsed"].(string))-1], 64)
+		if err != nil || data == nil {
+			return entity.Encrypt{}, err
+		}
+		encryptTime = encryptTime + floatNumber
 		encryptDTO.IDCard.Filename = encrypted_path_idcard
 		if err != nil || data == nil {
 			return entity.Encrypt{}, err
 		}
 
 		encrypted_path_cv, data, err := encrypt.AESEncrypt(encryptDTO.CV.Filename)
+		if err != nil || data == nil {
+			return entity.Encrypt{}, err
+		}
+		floatNumber, err = strconv.ParseFloat(data["elapsed"].(string)[:len(data["elapsed"].(string))-1], 64)
+		if err != nil || data == nil {
+			return entity.Encrypt{}, err
+		}
+		encryptTime = encryptTime + floatNumber
 		encryptDTO.CV.Filename = encrypted_path_cv
 		if err != nil || data == nil {
 			return entity.Encrypt{}, err
 		}
 
 		encrypted_path_video, data, err := encrypt.AESEncrypt(encryptDTO.Video.Filename)
+		if err != nil || data == nil {
+			return entity.Encrypt{}, err
+		}
+		floatNumber, err = strconv.ParseFloat(data["elapsed"].(string)[:len(data["elapsed"].(string))-1], 64)
+		if err != nil || data == nil {
+			return entity.Encrypt{}, err
+		}
+		encryptTime = encryptTime + floatNumber
 		encryptDTO.Video.Filename = encrypted_path_video
 		if err != nil || data == nil {
 			return entity.Encrypt{}, err
@@ -80,29 +123,69 @@ func (us *encryptService) CreateEncrypt(ctx *gin.Context, encryptDTO dto.Encrypt
 
 	} else if encryptMethod == "RC4" {
 		encrypten_name, data, err := encrypt.RC4Encrypt(encryptDTO.Name)
+		if err != nil || data == nil {
+			return entity.Encrypt{}, err
+		}
+		floatNumber, err := strconv.ParseFloat(data["elapsed"].(string)[:len(data["elapsed"].(string))-1], 64)
+		if err != nil || data == nil {
+			return entity.Encrypt{}, err
+		}
+		encryptTime = encryptTime + floatNumber
 		encryptDTO.Name = encrypten_name
 		if err != nil || data == nil {
 			return entity.Encrypt{}, err
 		}
 		encrypten_phone, data, err := encrypt.RC4Encrypt(encryptDTO.PhoneNumber)
+		if err != nil || data == nil {
+			return entity.Encrypt{}, err
+		}
+		floatNumber, err = strconv.ParseFloat(data["elapsed"].(string)[:len(data["elapsed"].(string))-1], 64)
+		if err != nil || data == nil {
+			return entity.Encrypt{}, err
+		}
+		encryptTime = encryptTime + floatNumber
 		encryptDTO.PhoneNumber = encrypten_phone
 		if err != nil || data == nil {
 			return entity.Encrypt{}, err
 		}
 
 		encrypted_path_idcard, data, err := encrypt.RC4Encrypt(encryptDTO.IDCard.Filename)
+		if err != nil || data == nil {
+			return entity.Encrypt{}, err
+		}
+		floatNumber, err = strconv.ParseFloat(data["elapsed"].(string)[:len(data["elapsed"].(string))-1], 64)
+		if err != nil || data == nil {
+			return entity.Encrypt{}, err
+		}
+		encryptTime = encryptTime + floatNumber
 		encryptDTO.IDCard.Filename = encrypted_path_idcard
 		if err != nil || data == nil {
 			return entity.Encrypt{}, err
 		}
 
 		encrypted_path_cv, data, err := encrypt.RC4Encrypt(encryptDTO.CV.Filename)
+		if err != nil || data == nil {
+			return entity.Encrypt{}, err
+		}
+		floatNumber, err = strconv.ParseFloat(data["elapsed"].(string)[:len(data["elapsed"].(string))-1], 64)
+		if err != nil || data == nil {
+			return entity.Encrypt{}, err
+		}
+		encryptTime = encryptTime + floatNumber
 		encryptDTO.CV.Filename = encrypted_path_cv
 		if err != nil || data == nil {
 			return entity.Encrypt{}, err
 		}
 
 		encrypted_path_video, data, err := encrypt.RC4Encrypt(encryptDTO.Video.Filename)
+		if err != nil || data == nil {
+			return entity.Encrypt{}, err
+		}
+		floatNumber, err = strconv.ParseFloat(data["elapsed"].(string)[:len(data["elapsed"].(string))-1], 64)
+		if err != nil || data == nil {
+			return entity.Encrypt{}, err
+		}
+		encryptTime = encryptTime + floatNumber
 		encryptDTO.Video.Filename = encrypted_path_video
 		if err != nil || data == nil {
 			return entity.Encrypt{}, err
@@ -110,29 +193,69 @@ func (us *encryptService) CreateEncrypt(ctx *gin.Context, encryptDTO dto.Encrypt
 
 	} else if encryptMethod == "DES" {
 		encrypten_name, data, err := encrypt.DESEncrypt(encryptDTO.Name)
+		if err != nil || data == nil {
+			return entity.Encrypt{}, err
+		}
+		floatNumber, err := strconv.ParseFloat(data["elapsed"].(string)[:len(data["elapsed"].(string))-1], 64)
+		if err != nil || data == nil {
+			return entity.Encrypt{}, err
+		}
+		encryptTime = encryptTime + floatNumber
 		encryptDTO.Name = encrypten_name
 		if err != nil || data == nil {
 			return entity.Encrypt{}, err
 		}
 		encrypten_phone, data, err := encrypt.DESEncrypt(encryptDTO.PhoneNumber)
+		if err != nil || data == nil {
+			return entity.Encrypt{}, err
+		}
+		floatNumber, err = strconv.ParseFloat(data["elapsed"].(string)[:len(data["elapsed"].(string))-1], 64)
+		if err != nil || data == nil {
+			return entity.Encrypt{}, err
+		}
+		encryptTime = encryptTime + floatNumber
 		encryptDTO.PhoneNumber = encrypten_phone
 		if err != nil || data == nil {
 			return entity.Encrypt{}, err
 		}
 
 		encrypted_path_idcard, data, err := encrypt.DESEncrypt(encryptDTO.IDCard.Filename)
+		if err != nil || data == nil {
+			return entity.Encrypt{}, err
+		}
+		floatNumber, err = strconv.ParseFloat(data["elapsed"].(string)[:len(data["elapsed"].(string))-1], 64)
+		if err != nil || data == nil {
+			return entity.Encrypt{}, err
+		}
+		encryptTime = encryptTime + floatNumber
 		encryptDTO.IDCard.Filename = encrypted_path_idcard
 		if err != nil || data == nil {
 			return entity.Encrypt{}, err
 		}
 
 		encrypted_path_cv, data, err := encrypt.DESEncrypt(encryptDTO.CV.Filename)
+		if err != nil || data == nil {
+			return entity.Encrypt{}, err
+		}
+		floatNumber, err = strconv.ParseFloat(data["elapsed"].(string)[:len(data["elapsed"].(string))-1], 64)
+		if err != nil || data == nil {
+			return entity.Encrypt{}, err
+		}
+		encryptTime = encryptTime + floatNumber
 		encryptDTO.CV.Filename = encrypted_path_cv
 		if err != nil || data == nil {
 			return entity.Encrypt{}, err
 		}
 
 		encrypted_path_video, data, err := encrypt.DESEncrypt(encryptDTO.Video.Filename)
+		if err != nil || data == nil {
+			return entity.Encrypt{}, err
+		}
+		floatNumber, err = strconv.ParseFloat(data["elapsed"].(string)[:len(data["elapsed"].(string))-1], 64)
+		if err != nil || data == nil {
+			return entity.Encrypt{}, err
+		}
+		encryptTime = encryptTime + floatNumber
 		encryptDTO.Video.Filename = encrypted_path_video
 		if err != nil || data == nil {
 			return entity.Encrypt{}, err
@@ -147,7 +270,7 @@ func (us *encryptService) CreateEncrypt(ctx *gin.Context, encryptDTO dto.Encrypt
 		IDCardUrl:     encryptDTO.IDCard.Filename,
 		VideoUrl:      encryptDTO.Video.Filename,
 		EncryptMethod: encryptMethod,
-		EncryptTime:   encryptTime,
+		EncryptTime:   strconv.FormatFloat(encryptTime, 'f', -1, 64),
 		UserID:        userID,
 	}
 
