@@ -8,6 +8,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/mashingan/smapping"
 )
 
 type EncryptController interface {
@@ -29,6 +30,8 @@ func NewEncryptController(us service.EncryptService, jwts service.JWTService) En
 
 func (uc *encryptController) CreateEncrypt(ctx *gin.Context) {
 	var encrypt dto.EncryptCreateDto
+	var encrypt2 dto.EncryptCreateDto
+	var encrypt3 dto.EncryptCreateDto
 	err := ctx.ShouldBind(&encrypt)
 
 	if err != nil {
@@ -39,6 +42,22 @@ func (uc *encryptController) CreateEncrypt(ctx *gin.Context) {
 
 	token := ctx.MustGet("token").(string)
 	userID, err := uc.jwtService.GetUserIDByToken(token)
+
+	if err != nil {
+		res := common.BuildErrorResponse("Gagal Memproses Request", err.Error(), common.EmptyObj{})
+		ctx.JSON(http.StatusBadRequest, res)
+		return
+	}
+
+	err = smapping.FillStruct(&encrypt2, smapping.MapFields(&encrypt))
+
+	if err != nil {
+		res := common.BuildErrorResponse("Gagal Memproses Request", err.Error(), common.EmptyObj{})
+		ctx.JSON(http.StatusBadRequest, res)
+		return
+	}
+
+	err = smapping.FillStruct(&encrypt3, smapping.MapFields(&encrypt))
 
 	if err != nil {
 		res := common.BuildErrorResponse("Gagal Memproses Request", err.Error(), common.EmptyObj{})
@@ -57,7 +76,7 @@ func (uc *encryptController) CreateEncrypt(ctx *gin.Context) {
 
 	// RC4
 
-	resultRC4, err := uc.encryptService.CreateEncrypt(ctx, encrypt, userID, "RC4", "1s")
+	resultRC4, err := uc.encryptService.CreateEncrypt(ctx, encrypt2, userID, "RC4", "1s")
 	if err != nil {
 		res := common.BuildErrorResponse("Gagal Menambahkan Encrypt", err.Error(), common.EmptyObj{})
 		ctx.JSON(http.StatusBadRequest, res)
@@ -66,7 +85,7 @@ func (uc *encryptController) CreateEncrypt(ctx *gin.Context) {
 
 	// DES
 
-	resultDES, err := uc.encryptService.CreateEncrypt(ctx, encrypt, userID, "DES", "1s")
+	resultDES, err := uc.encryptService.CreateEncrypt(ctx, encrypt3, userID, "DES", "1s")
 	if err != nil {
 		res := common.BuildErrorResponse("Gagal Menambahkan Encrypt", err.Error(), common.EmptyObj{})
 		ctx.JSON(http.StatusBadRequest, res)
