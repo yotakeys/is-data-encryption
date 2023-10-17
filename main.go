@@ -4,6 +4,7 @@ import (
 	"gin-gorm-clean-template/common"
 	"gin-gorm-clean-template/config"
 	"gin-gorm-clean-template/controller"
+	"gin-gorm-clean-template/middleware"
 	"gin-gorm-clean-template/repository"
 	"gin-gorm-clean-template/routes"
 	"gin-gorm-clean-template/service"
@@ -38,6 +39,7 @@ func main() {
 	)
 
 	server := gin.Default()
+	server.Use(middleware.CORSMiddleware())
 
 	routes.UserRoutes(server, userController, jwtService)
 	routes.EncryptRoutes(server, encryptController, jwtService)
