@@ -12,13 +12,13 @@ import (
 	"time"
 )
 
-func AESEncrypt(stringToEncrypt string, KEYS string) (encryptedString string, data map[string]interface{}, err error) {
+func AESEncrypt(stringToEncrypt string) (encryptedString string, data map[string]interface{}, err error) {
 	elapsedTimer := timerWithReturn("AESEncrypt")
 	defer elapsedTimer()
 
 	time.Sleep(1 * time.Second)
 
-	key, _ := hex.DecodeString(KEYS)
+	key := []byte(os.Getenv("ENCRYPT_KEY"))
 	plaintext := []byte(stringToEncrypt)
 
 	block, err := aes.NewCipher(key)
@@ -39,7 +39,7 @@ func AESEncrypt(stringToEncrypt string, KEYS string) (encryptedString string, da
 	ciphertext := aesGCM.Seal(nonce, nonce, plaintext, nil)
 
 	data = map[string]interface{}{
-		"key":       os.Getenv("ENCRPYT_KEY"),
+		"key":       os.Getenv("ENCRYPT_KEY"),
 		"plaintext": string(plaintext),
 		"block":     fmt.Sprintf("%d", block.BlockSize()),
 		"aes-gcm":   fmt.Sprintf("%v", aesGCM),
@@ -51,7 +51,7 @@ func AESEncrypt(stringToEncrypt string, KEYS string) (encryptedString string, da
 	return fmt.Sprintf("%x", ciphertext), data, err
 }
 
-func AESDecrypt(encryptedString string, KEYS string) (decryptedString string, err error) {
+func AESDecrypt(encryptedString string) (decryptedString string, err error) {
 	defer func() {
 		if r := recover(); r != nil {
 			decryptedString = ""
@@ -59,7 +59,7 @@ func AESDecrypt(encryptedString string, KEYS string) (decryptedString string, er
 		}
 	}()
 
-	key, _ := hex.DecodeString(KEYS)
+	key := []byte(os.Getenv("ENCRYPT_KEY"))
 	enc, _ := hex.DecodeString(encryptedString)
 
 	//Create a new Cipher Block from the key

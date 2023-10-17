@@ -16,7 +16,7 @@ func RC4Encrypt(stringToEncrypt string) (encryptedString string, data map[string
 
 	time.Sleep(1 * time.Second)
 
-	key := []byte(os.Getenv("ENCRPYT_KEY"))
+	key := []byte(os.Getenv("ENCRYPT_KEY"))
 	plaintext := []byte(stringToEncrypt)
 
 	cipher, err := rc4.NewCipher(key)
@@ -28,7 +28,7 @@ func RC4Encrypt(stringToEncrypt string) (encryptedString string, data map[string
 	cipher.XORKeyStream(ciphertext, plaintext)
 
 	data = map[string]interface{}{
-		"key":       os.Getenv("ENCRPYT_KEY"),
+		"key":       os.Getenv("ENCRYPT_KEY"),
 		"plaintext": string(plaintext),
 		"block":     fmt.Sprintf("%v", cipher),
 		"mode":      "RC4",
@@ -39,8 +39,8 @@ func RC4Encrypt(stringToEncrypt string) (encryptedString string, data map[string
 }
 
 // RC4Decrypt melakukan dekripsi RC4
-func RC4Decrypt(encryptedString string, KEYS string) (decryptedString string, err error) {
-	key := []byte(KEYS)
+func RC4Decrypt(encryptedString string) (decryptedString string, err error) {
+	key := []byte(os.Getenv("ENCRYPT_KEY"))
 	enc, _ := hex.DecodeString(encryptedString)
 
 	cipher, err := rc4.NewCipher(key)

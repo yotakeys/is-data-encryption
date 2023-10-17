@@ -35,7 +35,7 @@ func (db *EncryptConnection) CreateEncrypt(ctx context.Context, Encrypt entity.E
 
 func (db *EncryptConnection) GetAllEncrypt(ctx context.Context, userID uuid.UUID) ([]entity.Encrypt, error) {
 	var listEncrypt []entity.Encrypt
-	tx := db.connection.Where("user_id = ?", userID).Take(&listEncrypt)
+	tx := db.connection.Where("user_id = ?", userID).Find(&listEncrypt)
 	if tx.Error != nil {
 		return nil, tx.Error
 	}

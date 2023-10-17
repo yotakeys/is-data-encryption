@@ -18,7 +18,7 @@ func DESEncrypt(stringToEncrypt string) (encryptedString string, data map[string
 
 	time.Sleep(1 * time.Second)
 
-	key, _ := hex.DecodeString(os.Getenv("ENCRPYT_KEY"))
+	key, _ := hex.DecodeString(os.Getenv("ENCRYPT_KEY"))
 	plaintext := []byte(stringToEncrypt)
 
 	if len(key) != 8 {
@@ -39,7 +39,7 @@ func DESEncrypt(stringToEncrypt string) (encryptedString string, data map[string
 	mode.CryptBlocks(ciphertext, plaintext)
 
 	data = map[string]interface{}{
-		"key":         os.Getenv("ENCRPYT_KEY"),
+		"key":         os.Getenv("ENCRYPT_KEY"),
 		"plaintext":   string(plaintext),
 		"block":       fmt.Sprintf("%d", block.BlockSize()),
 		"mode_chiper": fmt.Sprintf("%v", mode),
@@ -51,8 +51,8 @@ func DESEncrypt(stringToEncrypt string) (encryptedString string, data map[string
 }
 
 // Decrypt data using DES with PKCS7 padding
-func DESDecrypt(encryptedString string, KEYS string) (decryptedString string, err error) {
-	key, _ := hex.DecodeString(KEYS)
+func DESDecrypt(encryptedString string) (decryptedString string, err error) {
+	key := []byte(os.Getenv("ENCRYPT_KEY"))
 	enc, _ := hex.DecodeString(encryptedString)
 
 	if len(key) != 8 {
