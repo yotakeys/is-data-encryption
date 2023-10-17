@@ -10,7 +10,7 @@ import (
 
 type EncryptRepository interface {
 	CreateEncrypt(ctx context.Context, Encrypt entity.Encrypt) (entity.Encrypt, error)
-	GetAllEncrypt(ctx context.Context) ([]entity.Encrypt, error)
+	GetAllEncrypt(ctx context.Context, userID uuid.UUID) ([]entity.Encrypt, error)
 	FindEncryptByID(ctx context.Context, EncryptID uuid.UUID) (entity.Encrypt, error)
 }
 
@@ -33,9 +33,9 @@ func (db *EncryptConnection) CreateEncrypt(ctx context.Context, Encrypt entity.E
 	return Encrypt, nil
 }
 
-func (db *EncryptConnection) GetAllEncrypt(ctx context.Context) ([]entity.Encrypt, error) {
+func (db *EncryptConnection) GetAllEncrypt(ctx context.Context, userID uuid.UUID) ([]entity.Encrypt, error) {
 	var listEncrypt []entity.Encrypt
-	tx := db.connection.Find(&listEncrypt)
+	tx := db.connection.Where("user_id = ?", userID).Take(&listEncrypt)
 	if tx.Error != nil {
 		return nil, tx.Error
 	}

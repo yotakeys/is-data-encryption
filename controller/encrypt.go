@@ -29,17 +29,21 @@ func NewEncryptController(us service.EncryptService, jwts service.JWTService) En
 func (uc *encryptController) CreateEncrypt(ctx *gin.Context) {
 	var encrypt dto.EncryptCreateDto
 	err := ctx.ShouldBind(&encrypt)
+
 	if err != nil {
 		res := common.BuildErrorResponse("Gagal Memproses Request", err.Error(), common.EmptyObj{})
 		ctx.JSON(http.StatusBadRequest, res)
 		return
 	}
 
+	token := ctx.MustGet("token").(string)
+	userID, err := uc.jwtService.GetUserIDByToken(token)
+
 	ctx.SaveUploadedFile(encrypt.IDCard, "uploads/id-card/"+encrypt.IDCard.Filename)
 	ctx.SaveUploadedFile(encrypt.CV, "uploads/cv/"+encrypt.CV.Filename)
 	ctx.SaveUploadedFile(encrypt.Video, "uploads/video/"+encrypt.Video.Filename)
 
-	result, err := uc.encryptService.CreateEncrypt(ctx.Request.Context(), encrypt)
+	result, err := uc.encryptService.CreateEncrypt(ctx.Request.Context(), encrypt, userID)
 	if err != nil {
 		res := common.BuildErrorResponse("Gagal Menambahkan Encrypt", err.Error(), common.EmptyObj{})
 		ctx.JSON(http.StatusBadRequest, res)
@@ -51,7 +55,10 @@ func (uc *encryptController) CreateEncrypt(ctx *gin.Context) {
 }
 
 func (uc *encryptController) GetAllEncrypt(ctx *gin.Context) {
-	result, err := uc.encryptService.GetAllEncrypt(ctx.Request.Context())
+	token := ctx.MustGet("token").(string)
+	userID, err := uc.jwtService.GetUserIDByToken(token)
+	result, err := uc.encryptService.GetAllEncrypt(ctx.Request.Context(), userID)
+
 	if err != nil {
 		res := common.BuildErrorResponse("Gagal Mendapatkan List Encrypt", err.Error(), common.EmptyObj{})
 		ctx.JSON(http.StatusBadRequest, res)

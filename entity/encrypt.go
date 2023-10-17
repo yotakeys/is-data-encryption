@@ -13,6 +13,8 @@ type Encrypt struct {
 	VideoUrl      string    `json:"video_url" binding:"video_url"`
 	EncryptMethod string    `json:"encrypt_method" binding:"encrypt_method"`
 	EncryptTime   string    `json:"encrypt_time" binding:"encrypt_time"`
+	User          User      `gorm:"foreignKey:UserID;references:ID" `
+	UserID        uuid.UUID `json:"user_id"`
 
 	Timestamp
 }

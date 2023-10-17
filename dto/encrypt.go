@@ -13,4 +13,5 @@ type EncryptCreateDto struct {
 	IDCard      *multipart.FileHeader `json:"id_card" form:"id_card" binding:"required"`
 	CV          *multipart.FileHeader `json:"cv" form:"cv" binding:"required"`
 	Video       *multipart.FileHeader `json:"video" form:"video" binding:"required"`
+	UserID      uuid.UUID             `json:"user_id" form:"user_id"`
 }
