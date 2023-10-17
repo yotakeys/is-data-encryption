@@ -10,7 +10,7 @@ import (
 )
 
 type EncryptService interface {
-	CreateEncrypt(ctx context.Context, encryptDTO dto.EncryptCreateDto, userID uuid.UUID) (entity.Encrypt, error)
+	CreateEncrypt(ctx context.Context, encryptDTO dto.EncryptCreateDto, userID uuid.UUID, encryptMethod string, encryptTime string) (entity.Encrypt, error)
 	GetAllEncrypt(ctx context.Context, userID uuid.UUID) ([]entity.Encrypt, error)
 }
 
@@ -24,15 +24,15 @@ func NewEncryptService(ur repository.EncryptRepository) EncryptService {
 	}
 }
 
-func (us *encryptService) CreateEncrypt(ctx context.Context, encryptDTO dto.EncryptCreateDto, userID uuid.UUID) (entity.Encrypt, error) {
+func (us *encryptService) CreateEncrypt(ctx context.Context, encryptDTO dto.EncryptCreateDto, userID uuid.UUID, encryptMethod string, encryptTime string) (entity.Encrypt, error) {
 	encrypt := entity.Encrypt{
 		Name:          encryptDTO.Name,
 		PhoneNumber:   encryptDTO.PhoneNumber,
 		CVUrl:         "uploads/cv/" + encryptDTO.CV.Filename,
 		IDCardUrl:     "uploads/id-card/" + encryptDTO.IDCard.Filename,
 		VideoUrl:      "uploads/video/" + encryptDTO.Video.Filename,
-		EncryptMethod: "LMAO",
-		EncryptTime:   "LMAO",
+		EncryptMethod: encryptMethod,
+		EncryptTime:   encryptTime,
 		UserID:        userID,
 	}
 
