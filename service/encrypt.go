@@ -6,11 +6,12 @@ import (
 	"gin-gorm-clean-template/entity"
 	"gin-gorm-clean-template/repository"
 
+	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 )
 
 type EncryptService interface {
-	CreateEncrypt(ctx context.Context, encryptDTO dto.EncryptCreateDto, userID uuid.UUID, encryptMethod string, encryptTime string) (entity.Encrypt, error)
+	CreateEncrypt(ctx *gin.Context, encryptDTO dto.EncryptCreateDto, userID uuid.UUID, encryptMethod string, encryptTime string) (entity.Encrypt, error)
 	GetAllEncrypt(ctx context.Context, userID uuid.UUID) ([]entity.Encrypt, error)
 }
 
@@ -24,7 +25,15 @@ func NewEncryptService(ur repository.EncryptRepository) EncryptService {
 	}
 }
 
-func (us *encryptService) CreateEncrypt(ctx context.Context, encryptDTO dto.EncryptCreateDto, userID uuid.UUID, encryptMethod string, encryptTime string) (entity.Encrypt, error) {
+func (us *encryptService) CreateEncrypt(ctx *gin.Context, encryptDTO dto.EncryptCreateDto, userID uuid.UUID, encryptMethod string, encryptTime string) (entity.Encrypt, error) {
+	encryptDTO.IDCard.Filename = userID.String() + "-" + encryptMethod + "-" + encryptDTO.IDCard.Filename
+	encryptDTO.CV.Filename = userID.String() + "-" + encryptMethod + "-" + encryptDTO.CV.Filename
+	encryptDTO.Video.Filename = userID.String() + "-" + encryptMethod + "-" + encryptDTO.Video.Filename
+
+	ctx.SaveUploadedFile(encryptDTO.IDCard, "uploads/id-card/"+encryptDTO.IDCard.Filename)
+	ctx.SaveUploadedFile(encryptDTO.CV, "uploads/cv/"+encryptDTO.CV.Filename)
+	ctx.SaveUploadedFile(encryptDTO.Video, "uploads/video/"+encryptDTO.Video.Filename)
+
 	encrypt := entity.Encrypt{
 		Name:          encryptDTO.Name,
 		PhoneNumber:   encryptDTO.PhoneNumber,
@@ -36,7 +45,7 @@ func (us *encryptService) CreateEncrypt(ctx context.Context, encryptDTO dto.Encr
 		UserID:        userID,
 	}
 
-	return us.encryptRepository.CreateEncrypt(ctx, encrypt)
+	return us.encryptRepository.CreateEncrypt(ctx.Request.Context(), encrypt)
 }
 
 func (us *encryptService) GetAllEncrypt(ctx context.Context, userID uuid.UUID) ([]entity.Encrypt, error) {

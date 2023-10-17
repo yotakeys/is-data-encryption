@@ -48,15 +48,7 @@ func (uc *encryptController) CreateEncrypt(ctx *gin.Context) {
 
 	// AES
 
-	encrypt.IDCard.Filename = userID.String() + "-aes-" + encrypt.IDCard.Filename
-	encrypt.CV.Filename = userID.String() + "-aes-" + encrypt.CV.Filename
-	encrypt.Video.Filename = userID.String() + "-aes-" + encrypt.Video.Filename
-
-	ctx.SaveUploadedFile(encrypt.IDCard, "uploads/id-card/"+encrypt.IDCard.Filename)
-	ctx.SaveUploadedFile(encrypt.CV, "uploads/cv/"+encrypt.CV.Filename)
-	ctx.SaveUploadedFile(encrypt.Video, "uploads/video/"+encrypt.Video.Filename)
-
-	resultAES, err := uc.encryptService.CreateEncrypt(ctx.Request.Context(), encrypt, userID, "AES", "1s")
+	resultAES, err := uc.encryptService.CreateEncrypt(ctx, encrypt, userID, "AES", "1s")
 	if err != nil {
 		res := common.BuildErrorResponse("Gagal Menambahkan Encrypt", err.Error(), common.EmptyObj{})
 		ctx.JSON(http.StatusBadRequest, res)
@@ -65,15 +57,7 @@ func (uc *encryptController) CreateEncrypt(ctx *gin.Context) {
 
 	// RC4
 
-	encrypt.IDCard.Filename = userID.String() + "-rc4-" + encrypt.IDCard.Filename
-	encrypt.CV.Filename = userID.String() + "-rc4-" + encrypt.CV.Filename
-	encrypt.Video.Filename = userID.String() + "-rc4-" + encrypt.Video.Filename
-
-	ctx.SaveUploadedFile(encrypt.IDCard, "uploads/id-card/"+encrypt.IDCard.Filename)
-	ctx.SaveUploadedFile(encrypt.CV, "uploads/cv/"+encrypt.CV.Filename)
-	ctx.SaveUploadedFile(encrypt.Video, "uploads/video/"+encrypt.Video.Filename)
-
-	resultRC4, err := uc.encryptService.CreateEncrypt(ctx.Request.Context(), encrypt, userID, "RC4", "1s")
+	resultRC4, err := uc.encryptService.CreateEncrypt(ctx, encrypt, userID, "RC4", "1s")
 	if err != nil {
 		res := common.BuildErrorResponse("Gagal Menambahkan Encrypt", err.Error(), common.EmptyObj{})
 		ctx.JSON(http.StatusBadRequest, res)
@@ -82,15 +66,7 @@ func (uc *encryptController) CreateEncrypt(ctx *gin.Context) {
 
 	// DES
 
-	encrypt.IDCard.Filename = userID.String() + "-des-" + encrypt.IDCard.Filename
-	encrypt.CV.Filename = userID.String() + "-des-" + encrypt.CV.Filename
-	encrypt.Video.Filename = userID.String() + "-des-" + encrypt.Video.Filename
-
-	ctx.SaveUploadedFile(encrypt.IDCard, "uploads/id-card/"+encrypt.IDCard.Filename)
-	ctx.SaveUploadedFile(encrypt.CV, "uploads/cv/"+encrypt.CV.Filename)
-	ctx.SaveUploadedFile(encrypt.Video, "uploads/video/"+encrypt.Video.Filename)
-
-	resultDES, err := uc.encryptService.CreateEncrypt(ctx.Request.Context(), encrypt, userID, "DES", "1s")
+	resultDES, err := uc.encryptService.CreateEncrypt(ctx, encrypt, userID, "DES", "1s")
 	if err != nil {
 		res := common.BuildErrorResponse("Gagal Menambahkan Encrypt", err.Error(), common.EmptyObj{})
 		ctx.JSON(http.StatusBadRequest, res)
