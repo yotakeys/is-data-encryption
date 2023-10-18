@@ -80,7 +80,7 @@ func (uc *encryptController) CreateEncrypt(ctx *gin.Context) {
 	result[1] = resultRC4
 	result[2] = resultDES
 
-	res := common.BuildResponse(true, "Berhasil Menambahkan Encrypt", resultRC4)
+	res := common.BuildResponse(true, "Berhasil Menambahkan Encrypt", result)
 	ctx.JSON(http.StatusOK, res)
 }
 
