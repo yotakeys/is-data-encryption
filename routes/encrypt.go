@@ -13,5 +13,6 @@ func EncryptRoutes(router *gin.Engine, EncryptController controller.EncryptContr
 	{
 		encryptRoutes.POST("", middleware.Authenticate(jwtService), EncryptController.CreateEncrypt)
 		encryptRoutes.GET("", middleware.Authenticate(jwtService), EncryptController.GetAllEncrypt)
+		encryptRoutes.GET("/file", EncryptController.GetFile)
 	}
 }

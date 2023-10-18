@@ -6,14 +6,15 @@ import (
 	"gin-gorm-clean-template/entity"
 	"gin-gorm-clean-template/service"
 	"net/http"
+	"os"
 
 	"github.com/gin-gonic/gin"
-	"github.com/mashingan/smapping"
 )
 
 type EncryptController interface {
 	CreateEncrypt(ctx *gin.Context)
 	GetAllEncrypt(ctx *gin.Context)
+	GetFile(ctx *gin.Context)
 }
 
 type encryptController struct {
@@ -30,8 +31,6 @@ func NewEncryptController(us service.EncryptService, jwts service.JWTService) En
 
 func (uc *encryptController) CreateEncrypt(ctx *gin.Context) {
 	var encrypt dto.EncryptCreateDto
-	var encrypt2 dto.EncryptCreateDto
-	var encrypt3 dto.EncryptCreateDto
 	err := ctx.ShouldBind(&encrypt)
 
 	if err != nil {
@@ -42,22 +41,6 @@ func (uc *encryptController) CreateEncrypt(ctx *gin.Context) {
 
 	token := ctx.MustGet("token").(string)
 	userID, err := uc.jwtService.GetUserIDByToken(token)
-
-	if err != nil {
-		res := common.BuildErrorResponse("Gagal Memproses Request", err.Error(), common.EmptyObj{})
-		ctx.JSON(http.StatusBadRequest, res)
-		return
-	}
-
-	err = smapping.FillStruct(&encrypt2, smapping.MapFields(&encrypt))
-
-	if err != nil {
-		res := common.BuildErrorResponse("Gagal Memproses Request", err.Error(), common.EmptyObj{})
-		ctx.JSON(http.StatusBadRequest, res)
-		return
-	}
-
-	err = smapping.FillStruct(&encrypt3, smapping.MapFields(&encrypt))
 
 	if err != nil {
 		res := common.BuildErrorResponse("Gagal Memproses Request", err.Error(), common.EmptyObj{})
@@ -76,7 +59,7 @@ func (uc *encryptController) CreateEncrypt(ctx *gin.Context) {
 
 	// RC4
 
-	resultRC4, err := uc.encryptService.CreateEncrypt(ctx, encrypt2, userID, "RC4")
+	resultRC4, err := uc.encryptService.CreateEncrypt(ctx, encrypt, userID, "RC4")
 	if err != nil {
 		res := common.BuildErrorResponse("Gagal Menambahkan Encrypt", err.Error(), common.EmptyObj{})
 		ctx.JSON(http.StatusBadRequest, res)
@@ -85,7 +68,7 @@ func (uc *encryptController) CreateEncrypt(ctx *gin.Context) {
 
 	// DES
 
-	resultDES, err := uc.encryptService.CreateEncrypt(ctx, encrypt3, userID, "DES")
+	resultDES, err := uc.encryptService.CreateEncrypt(ctx, encrypt, userID, "DES")
 	if err != nil {
 		res := common.BuildErrorResponse("Gagal Menambahkan Encrypt", err.Error(), common.EmptyObj{})
 		ctx.JSON(http.StatusBadRequest, res)
@@ -97,7 +80,7 @@ func (uc *encryptController) CreateEncrypt(ctx *gin.Context) {
 	result[1] = resultRC4
 	result[2] = resultDES
 
-	res := common.BuildResponse(true, "Berhasil Menambahkan Encrypt", result)
+	res := common.BuildResponse(true, "Berhasil Menambahkan Encrypt", resultRC4)
 	ctx.JSON(http.StatusOK, res)
 }
 
@@ -121,4 +104,17 @@ func (uc *encryptController) GetAllEncrypt(ctx *gin.Context) {
 
 	res := common.BuildResponse(true, "Berhasil Mendapatkan List Encrypt", result)
 	ctx.JSON(http.StatusOK, res)
+}
+
+func (uc *encryptController) GetFile(ctx *gin.Context) {
+	filePath := ctx.Query("file_path")
+
+	_, err := os.Stat(filePath)
+	if os.IsNotExist(err) {
+		res := common.BuildErrorResponse("Gagal Mendapatkan File", err.Error(), common.EmptyObj{})
+		ctx.JSON(http.StatusBadRequest, res)
+		return
+	}
+
+	ctx.File(filePath)
 }

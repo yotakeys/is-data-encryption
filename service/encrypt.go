@@ -40,13 +40,13 @@ func RandStringBytesRmndr(n int) string {
 
 func (us *encryptService) CreateEncrypt(ctx *gin.Context, encryptDTO dto.EncryptCreateDto, userID uuid.UUID, encryptMethod string) (entity.Encrypt, error) {
 
-	encryptDTO.IDCard.Filename = "uploads/id-card/" + RandStringBytesRmndr(5) + encryptDTO.IDCard.Filename
-	encryptDTO.CV.Filename = "uploads/cv/" + RandStringBytesRmndr(5) + encryptDTO.CV.Filename
-	encryptDTO.Video.Filename = "uploads/video/" + RandStringBytesRmndr(5) + encryptDTO.Video.Filename
+	IDCardPath := "uploads/id-card/" + RandStringBytesRmndr(12) + encryptDTO.IDCard.Filename
+	CVPath := "uploads/cv/" + RandStringBytesRmndr(12) + encryptDTO.CV.Filename
+	VideoPath := "uploads/video/" + RandStringBytesRmndr(12) + encryptDTO.Video.Filename
 
-	ctx.SaveUploadedFile(encryptDTO.IDCard, encryptDTO.IDCard.Filename)
-	ctx.SaveUploadedFile(encryptDTO.CV, encryptDTO.CV.Filename)
-	ctx.SaveUploadedFile(encryptDTO.Video, encryptDTO.Video.Filename)
+	ctx.SaveUploadedFile(&encryptDTO.IDCard, IDCardPath)
+	ctx.SaveUploadedFile(&encryptDTO.CV, CVPath)
+	ctx.SaveUploadedFile(&encryptDTO.Video, VideoPath)
 
 	var encryptTime float64
 
@@ -79,7 +79,7 @@ func (us *encryptService) CreateEncrypt(ctx *gin.Context, encryptDTO dto.Encrypt
 			return entity.Encrypt{}, err
 		}
 
-		encrypted_path_idcard, data, err := encrypt.AESEncrypt(encryptDTO.IDCard.Filename)
+		encrypted_path_idcard, data, err := encrypt.AESEncrypt(IDCardPath)
 		if err != nil || data == nil {
 			return entity.Encrypt{}, err
 		}
@@ -88,12 +88,12 @@ func (us *encryptService) CreateEncrypt(ctx *gin.Context, encryptDTO dto.Encrypt
 			return entity.Encrypt{}, err
 		}
 		encryptTime = encryptTime + floatNumber
-		encryptDTO.IDCard.Filename = encrypted_path_idcard
+		IDCardPath = encrypted_path_idcard
 		if err != nil || data == nil {
 			return entity.Encrypt{}, err
 		}
 
-		encrypted_path_cv, data, err := encrypt.AESEncrypt(encryptDTO.CV.Filename)
+		encrypted_path_cv, data, err := encrypt.AESEncrypt(CVPath)
 		if err != nil || data == nil {
 			return entity.Encrypt{}, err
 		}
@@ -102,12 +102,12 @@ func (us *encryptService) CreateEncrypt(ctx *gin.Context, encryptDTO dto.Encrypt
 			return entity.Encrypt{}, err
 		}
 		encryptTime = encryptTime + floatNumber
-		encryptDTO.CV.Filename = encrypted_path_cv
+		CVPath = encrypted_path_cv
 		if err != nil || data == nil {
 			return entity.Encrypt{}, err
 		}
 
-		encrypted_path_video, data, err := encrypt.AESEncrypt(encryptDTO.Video.Filename)
+		encrypted_path_video, data, err := encrypt.AESEncrypt(VideoPath)
 		if err != nil || data == nil {
 			return entity.Encrypt{}, err
 		}
@@ -116,7 +116,7 @@ func (us *encryptService) CreateEncrypt(ctx *gin.Context, encryptDTO dto.Encrypt
 			return entity.Encrypt{}, err
 		}
 		encryptTime = encryptTime + floatNumber
-		encryptDTO.Video.Filename = encrypted_path_video
+		VideoPath = encrypted_path_video
 		if err != nil || data == nil {
 			return entity.Encrypt{}, err
 		}
@@ -149,7 +149,7 @@ func (us *encryptService) CreateEncrypt(ctx *gin.Context, encryptDTO dto.Encrypt
 			return entity.Encrypt{}, err
 		}
 
-		encrypted_path_idcard, data, err := encrypt.RC4Encrypt(encryptDTO.IDCard.Filename)
+		encrypted_path_idcard, data, err := encrypt.RC4Encrypt(IDCardPath)
 		if err != nil || data == nil {
 			return entity.Encrypt{}, err
 		}
@@ -158,12 +158,12 @@ func (us *encryptService) CreateEncrypt(ctx *gin.Context, encryptDTO dto.Encrypt
 			return entity.Encrypt{}, err
 		}
 		encryptTime = encryptTime + floatNumber
-		encryptDTO.IDCard.Filename = encrypted_path_idcard
+		IDCardPath = encrypted_path_idcard
 		if err != nil || data == nil {
 			return entity.Encrypt{}, err
 		}
 
-		encrypted_path_cv, data, err := encrypt.RC4Encrypt(encryptDTO.CV.Filename)
+		encrypted_path_cv, data, err := encrypt.RC4Encrypt(CVPath)
 		if err != nil || data == nil {
 			return entity.Encrypt{}, err
 		}
@@ -172,12 +172,12 @@ func (us *encryptService) CreateEncrypt(ctx *gin.Context, encryptDTO dto.Encrypt
 			return entity.Encrypt{}, err
 		}
 		encryptTime = encryptTime + floatNumber
-		encryptDTO.CV.Filename = encrypted_path_cv
+		CVPath = encrypted_path_cv
 		if err != nil || data == nil {
 			return entity.Encrypt{}, err
 		}
 
-		encrypted_path_video, data, err := encrypt.RC4Encrypt(encryptDTO.Video.Filename)
+		encrypted_path_video, data, err := encrypt.RC4Encrypt(VideoPath)
 		if err != nil || data == nil {
 			return entity.Encrypt{}, err
 		}
@@ -186,7 +186,7 @@ func (us *encryptService) CreateEncrypt(ctx *gin.Context, encryptDTO dto.Encrypt
 			return entity.Encrypt{}, err
 		}
 		encryptTime = encryptTime + floatNumber
-		encryptDTO.Video.Filename = encrypted_path_video
+		VideoPath = encrypted_path_video
 		if err != nil || data == nil {
 			return entity.Encrypt{}, err
 		}
@@ -219,7 +219,7 @@ func (us *encryptService) CreateEncrypt(ctx *gin.Context, encryptDTO dto.Encrypt
 			return entity.Encrypt{}, err
 		}
 
-		encrypted_path_idcard, data, err := encrypt.DESEncrypt(encryptDTO.IDCard.Filename)
+		encrypted_path_idcard, data, err := encrypt.DESEncrypt(IDCardPath)
 		if err != nil || data == nil {
 			return entity.Encrypt{}, err
 		}
@@ -228,12 +228,12 @@ func (us *encryptService) CreateEncrypt(ctx *gin.Context, encryptDTO dto.Encrypt
 			return entity.Encrypt{}, err
 		}
 		encryptTime = encryptTime + floatNumber
-		encryptDTO.IDCard.Filename = encrypted_path_idcard
+		IDCardPath = encrypted_path_idcard
 		if err != nil || data == nil {
 			return entity.Encrypt{}, err
 		}
 
-		encrypted_path_cv, data, err := encrypt.DESEncrypt(encryptDTO.CV.Filename)
+		encrypted_path_cv, data, err := encrypt.DESEncrypt(CVPath)
 		if err != nil || data == nil {
 			return entity.Encrypt{}, err
 		}
@@ -242,12 +242,12 @@ func (us *encryptService) CreateEncrypt(ctx *gin.Context, encryptDTO dto.Encrypt
 			return entity.Encrypt{}, err
 		}
 		encryptTime = encryptTime + floatNumber
-		encryptDTO.CV.Filename = encrypted_path_cv
+		CVPath = encrypted_path_cv
 		if err != nil || data == nil {
 			return entity.Encrypt{}, err
 		}
 
-		encrypted_path_video, data, err := encrypt.DESEncrypt(encryptDTO.Video.Filename)
+		encrypted_path_video, data, err := encrypt.DESEncrypt(VideoPath)
 		if err != nil || data == nil {
 			return entity.Encrypt{}, err
 		}
@@ -256,7 +256,7 @@ func (us *encryptService) CreateEncrypt(ctx *gin.Context, encryptDTO dto.Encrypt
 			return entity.Encrypt{}, err
 		}
 		encryptTime = encryptTime + floatNumber
-		encryptDTO.Video.Filename = encrypted_path_video
+		VideoPath = encrypted_path_video
 		if err != nil || data == nil {
 			return entity.Encrypt{}, err
 		}
@@ -266,9 +266,9 @@ func (us *encryptService) CreateEncrypt(ctx *gin.Context, encryptDTO dto.Encrypt
 	encrypt := entity.Encrypt{
 		Name:          encryptDTO.Name,
 		PhoneNumber:   encryptDTO.PhoneNumber,
-		CVUrl:         encryptDTO.CV.Filename,
-		IDCardUrl:     encryptDTO.IDCard.Filename,
-		VideoUrl:      encryptDTO.Video.Filename,
+		CVUrl:         CVPath,
+		IDCardUrl:     IDCardPath,
+		VideoUrl:      VideoPath,
 		EncryptMethod: encryptMethod,
 		EncryptTime:   strconv.FormatFloat(encryptTime, 'f', -1, 64),
 		UserID:        userID,
