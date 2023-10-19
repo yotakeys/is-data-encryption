@@ -40,9 +40,9 @@ func RandStringBytesRmndr(n int) string {
 
 func (us *encryptService) CreateEncrypt(ctx *gin.Context, encryptDTO dto.EncryptCreateDto, userID uuid.UUID, encryptMethod string) (entity.Encrypt, error) {
 
-	IDCardPath := "uploads/id-card/" + RandStringBytesRmndr(12) + encryptDTO.IDCard.Filename
-	CVPath := "uploads/cv/" + RandStringBytesRmndr(12) + encryptDTO.CV.Filename
-	VideoPath := "uploads/video/" + RandStringBytesRmndr(12) + encryptDTO.Video.Filename
+	IDCardPath := "uploads/id-card/" + RandStringBytesRmndr(12) + encryptDTO.IDCardFileName
+	CVPath := "uploads/cv/" + RandStringBytesRmndr(12) + encryptDTO.CVFileName
+	VideoPath := "uploads/video/" + RandStringBytesRmndr(12) + encryptDTO.VideoFileName
 
 	ctx.SaveUploadedFile(&encryptDTO.IDCard, IDCardPath)
 	ctx.SaveUploadedFile(&encryptDTO.CV, CVPath)
