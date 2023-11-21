@@ -27,7 +27,7 @@ type UserService interface {
 	MeUser(ctx context.Context, userID uuid.UUID) (entity.User, error)
 	SendEmailEncrypt(ctx context.Context, UserId uuid.UUID, email string) (entity.User, error)
 	AsymmetricEncrypt(ctx context.Context, requestedUserEmail string, requestingUserEmail string) (entity.User, error)
-	AsymmetricDecrypt(ctx context.Context, userID uuid.UUID, requestingUserEmail string) (entity.User, error)
+	AsymmetricDecrypt(ctx context.Context, userID uuid.UUID, requestingUserEmail string) (dto.DecryptRSAResponseDTO, error)
 }
 
 type userService struct {
@@ -185,7 +185,7 @@ func (us *userService) AsymmetricEncrypt(ctx context.Context, requestedUserEmail
 		return requestingUser, err
 	}
 
-	encryptedData, err := us.encryptRepository.GetFirstAESEncrpytedData(ctx, requestedUser.ID)
+	encryptedData, err := us.encryptRepository.GetFirstAESEncrpytedData(ctx, requestingUser.ID)
 	if err != nil {
 		return requestedUser, err
 	}
@@ -229,11 +229,30 @@ func (us *userService) AsymmetricEncrypt(ctx context.Context, requestedUserEmail
 	return requestedUser, nil
 }
 
-func (us *userService) AsymmetricDecrypt(ctx context.Context, userID uuid.UUID, requestingUserEmail string) (entity.User, error) {
+func (us *userService) AsymmetricDecrypt(ctx context.Context, userID uuid.UUID, requestingUserEmail string) (dto.DecryptRSAResponseDTO, error) {
 	requestedUser, err := us.userRepository.FindUserByEmail(ctx, requestingUserEmail)
-	// if err != nil {
-	return requestedUser, err
-	// }
+	if err != nil {
+		return dto.DecryptRSAResponseDTO{}, err
+	}
 
-	// asymmetric, err := us.userRepository.FindAsymmetric(ctx, userID, requestedUser.ID)
+	requestingUser, err := us.userRepository.FindUserByID(ctx, userID)
+	if err != nil {
+		return dto.DecryptRSAResponseDTO{}, err
+	}
+
+	println(requestedUser.Email, requestingUser.Email)
+	asymmetric, err := us.userRepository.FindAsymmetricByUserID(ctx, userID, requestedUser.ID)
+	if err != nil {
+		return dto.DecryptRSAResponseDTO{}, err
+	}
+
+	decryptResponse := dto.DecryptRSAResponseDTO{
+		Name:        encrypt.DecryptRSA(asymmetric.Name, requestingUser.PrivateKey),
+		PhoneNumber: encrypt.DecryptRSA(asymmetric.PhoneNumber, requestingUser.PrivateKey),
+		IDCard:      encrypt.DecryptRSA(asymmetric.IDCardUrl, requestingUser.PrivateKey),
+		CV:          encrypt.DecryptRSA(asymmetric.CVUrl, requestingUser.PrivateKey),
+		Video:       encrypt.DecryptRSA(asymmetric.VideoUrl, requestingUser.PrivateKey),
+	}
+
+	return decryptResponse, nil
 }

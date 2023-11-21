@@ -229,13 +229,13 @@ func (uc *userController) AsymmetricDecrypt(ctx *gin.Context) {
 		return
 	}
 
-	_, err = uc.userService.AsymmetricDecrypt(ctx.Request.Context(), userID, user.Email)
+	result, err := uc.userService.AsymmetricDecrypt(ctx.Request.Context(), userID, user.Email)
 	if err != nil {
 		res := common.BuildErrorResponse("Gagal Memproses User", err.Error(), common.EmptyObj{})
 		ctx.JSON(http.StatusBadRequest, res)
 		return
 	}
 
-	res := common.BuildResponse(true, "Berhasil Memproses User", common.EmptyObj{})
+	res := common.BuildResponse(true, "Berhasil Memproses User", result)
 	ctx.JSON(http.StatusOK, res)
 }

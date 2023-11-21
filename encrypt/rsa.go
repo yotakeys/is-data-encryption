@@ -38,22 +38,22 @@ func EncryptRSA(msg, publicKey string) string {
 	return base64.StdEncoding.EncodeToString(encryptedBytes)
 }
 
-func DecryptRSA(data, priv string) (string, error) {
+func DecryptRSA(data, priv string) string {
 	data2, err := base64.StdEncoding.DecodeString(data)
 	if err != nil {
-		return "", err
+		panic(err)
 	}
 
 	block, _ := pem.Decode([]byte(priv))
 	key, err := x509.ParsePKCS1PrivateKey(block.Bytes)
 	if err != nil {
-		return "", err
+		panic(err)
 	}
 
 	decrypted, err := rsa.DecryptOAEP(sha256.New(),
 		rand.Reader, key, data2, nil)
 	if err != nil {
-		return "", err
+		panic(err)
 	}
-	return string(decrypted), nil
+	return string(decrypted)
 }
