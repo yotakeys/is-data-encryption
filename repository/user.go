@@ -16,7 +16,7 @@ type UserRepository interface {
 	DeleteUser(ctx context.Context, userID uuid.UUID) error
 	UpdateUser(ctx context.Context, user entity.User) error
 	CreateAsymmetric(ctx context.Context, asymmetric entity.Asymmetric) (entity.Asymmetric, error)
-	FindAsymmetricByUserID(ctx context.Context, requestingUser uuid.UUID, requestedUser uuid.UUID) (entity.Asymmetric, error)
+	FindAsymmetricByUserID(ctx context.Context, requestingUser uuid.UUID, requestedUser uuid.UUID) ([]entity.Asymmetric, error)
 }
 
 type userConnection struct {
@@ -99,11 +99,11 @@ func (db *userConnection) FindAsymmetric(ctx context.Context, userID uuid.UUID) 
 	return listAsymmetric, nil
 }
 
-func (db *userConnection) FindAsymmetricByUserID(ctx context.Context, requestingUser uuid.UUID, requestedUser uuid.UUID) (entity.Asymmetric, error) {
-	var listAsymmetric entity.Asymmetric
+func (db *userConnection) FindAsymmetricByUserID(ctx context.Context, requestingUser uuid.UUID, requestedUser uuid.UUID) ([]entity.Asymmetric, error) {
+	var listAsymmetric []entity.Asymmetric
 	tx := db.connection.Where("requesting_user_id = ? AND requested_user_id = ?", requestingUser, requestedUser).Find(&listAsymmetric)
 	if tx.Error != nil {
-		return entity.Asymmetric{}, tx.Error
+		return []entity.Asymmetric{}, tx.Error
 	}
 	return listAsymmetric, nil
 }

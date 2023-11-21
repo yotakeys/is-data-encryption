@@ -3,6 +3,7 @@ package service
 import (
 	"bytes"
 	"context"
+	"errors"
 	"gin-gorm-clean-template/common"
 	"gin-gorm-clean-template/dto"
 	"gin-gorm-clean-template/encrypt"
@@ -27,7 +28,7 @@ type UserService interface {
 	MeUser(ctx context.Context, userID uuid.UUID) (entity.User, error)
 	SendEmailEncrypt(ctx context.Context, UserId uuid.UUID, email string) (entity.User, error)
 	AsymmetricEncrypt(ctx context.Context, requestedUserEmail string, requestingUserEmail string) (entity.User, error)
-	AsymmetricDecrypt(ctx context.Context, userID uuid.UUID, requestingUserEmail string) (dto.DecryptRSAResponseDTO, error)
+	AsymmetricDecrypt(ctx context.Context, userID uuid.UUID, requestingUserEmail string) ([]dto.DecryptRSAResponseDTO, error)
 }
 
 type userService struct {
@@ -125,6 +126,12 @@ func (us *userService) MeUser(ctx context.Context, userID uuid.UUID) (entity.Use
 }
 
 func (us *userService) SendEmailEncrypt(ctx context.Context, UserId uuid.UUID, email string) (entity.User, error) {
+
+	_, err := us.userRepository.FindUserByEmail(ctx, email)
+	if err != nil {
+		return entity.User{}, errors.New("email user yang di request tidak terdaftar")
+	}
+
 	user, err := us.userRepository.FindUserByID(ctx, UserId)
 	if err != nil {
 		return user, err
@@ -178,14 +185,19 @@ func buildEmail(requestedEmail string, requestingEmail string) (map[string]strin
 func (us *userService) AsymmetricEncrypt(ctx context.Context, requestedUserEmail, requestingUserEmail string) (entity.User, error) {
 	requestedUser, err := us.userRepository.FindUserByEmail(ctx, requestedUserEmail)
 	if err != nil {
-		return requestedUser, err
+		return requestedUser, errors.New("email user yang di request tidak terdaftar")
 	}
 	requestingUser, err := us.userRepository.FindUserByEmail(ctx, requestingUserEmail)
 	if err != nil {
-		return requestingUser, err
+		return requestingUser, errors.New("email user yang me request tidak terdaftar")
 	}
 
-	encryptedData, err := us.encryptRepository.GetFirstAESEncrpytedData(ctx, requestingUser.ID)
+	dataRequested, err := us.encryptRepository.GetAllEncrypt(ctx, requestedUser.ID)
+	if err != nil || len(dataRequested) == 0 {
+		return requestedUser, errors.New("user yang di request tidak memiliki data")
+	}
+
+	encryptedData, err := us.encryptRepository.GetFirstAESEncrpytedData(ctx, requestedUser.ID)
 	if err != nil {
 		return requestedUser, err
 	}
@@ -229,29 +241,33 @@ func (us *userService) AsymmetricEncrypt(ctx context.Context, requestedUserEmail
 	return requestedUser, nil
 }
 
-func (us *userService) AsymmetricDecrypt(ctx context.Context, userID uuid.UUID, requestingUserEmail string) (dto.DecryptRSAResponseDTO, error) {
+func (us *userService) AsymmetricDecrypt(ctx context.Context, userID uuid.UUID, requestingUserEmail string) ([]dto.DecryptRSAResponseDTO, error) {
+
 	requestedUser, err := us.userRepository.FindUserByEmail(ctx, requestingUserEmail)
 	if err != nil {
-		return dto.DecryptRSAResponseDTO{}, err
+		return []dto.DecryptRSAResponseDTO{}, errors.New("email user yang di request tidak terdaftar")
 	}
 
 	requestingUser, err := us.userRepository.FindUserByID(ctx, userID)
 	if err != nil {
-		return dto.DecryptRSAResponseDTO{}, err
+		return []dto.DecryptRSAResponseDTO{}, err
 	}
 
-	println(requestedUser.Email, requestingUser.Email)
-	asymmetric, err := us.userRepository.FindAsymmetricByUserID(ctx, userID, requestedUser.ID)
-	if err != nil {
-		return dto.DecryptRSAResponseDTO{}, err
+	asymmetrics, err := us.userRepository.FindAsymmetricByUserID(ctx, userID, requestedUser.ID)
+	if err != nil || len(asymmetrics) == 0 {
+		return []dto.DecryptRSAResponseDTO{}, errors.New("akses data ke user tidak ada")
 	}
 
-	decryptResponse := dto.DecryptRSAResponseDTO{
-		Name:        encrypt.DecryptRSA(asymmetric.Name, requestingUser.PrivateKey),
-		PhoneNumber: encrypt.DecryptRSA(asymmetric.PhoneNumber, requestingUser.PrivateKey),
-		IDCard:      encrypt.DecryptRSA(asymmetric.IDCardUrl, requestingUser.PrivateKey),
-		CV:          encrypt.DecryptRSA(asymmetric.CVUrl, requestingUser.PrivateKey),
-		Video:       encrypt.DecryptRSA(asymmetric.VideoUrl, requestingUser.PrivateKey),
+	var decryptResponse []dto.DecryptRSAResponseDTO
+
+	for _, asymmetric := range asymmetrics {
+		decryptResponse = append(decryptResponse, dto.DecryptRSAResponseDTO{
+			Name:        encrypt.DecryptRSA(asymmetric.Name, requestingUser.PrivateKey),
+			PhoneNumber: encrypt.DecryptRSA(asymmetric.PhoneNumber, requestingUser.PrivateKey),
+			IDCard:      encrypt.DecryptRSA(asymmetric.IDCardUrl, requestingUser.PrivateKey),
+			CV:          encrypt.DecryptRSA(asymmetric.CVUrl, requestingUser.PrivateKey),
+			Video:       encrypt.DecryptRSA(asymmetric.VideoUrl, requestingUser.PrivateKey),
+		})
 	}
 
 	return decryptResponse, nil
