@@ -5,8 +5,8 @@ import (
 	"gin-gorm-clean-template/dto"
 	"gin-gorm-clean-template/encrypt"
 	"gin-gorm-clean-template/entity"
+	"gin-gorm-clean-template/helpers"
 	"gin-gorm-clean-template/repository"
-	"math/rand"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
@@ -28,21 +28,11 @@ func NewEncryptService(ur repository.EncryptRepository) EncryptService {
 	}
 }
 
-const letterBytes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
-
-func RandStringBytesRmndr(n int) string {
-	b := make([]byte, n)
-	for i := range b {
-		b[i] = letterBytes[rand.Int63()%int64(len(letterBytes))]
-	}
-	return string(b)
-}
-
 func (us *encryptService) CreateEncrypt(ctx *gin.Context, encryptDTO dto.EncryptCreateDto, userID uuid.UUID, encryptMethod string) (entity.Encrypt, error) {
 
-	IDCardPath := "uploads/id-card/" + RandStringBytesRmndr(12) + encryptDTO.IDCardFileName
-	CVPath := "uploads/cv/" + RandStringBytesRmndr(12) + encryptDTO.CVFileName
-	VideoPath := "uploads/video/" + RandStringBytesRmndr(12) + encryptDTO.VideoFileName
+	IDCardPath := "uploads/id-card/" + helpers.RandStringBytesRmndr(12) + encryptDTO.IDCardFileName
+	CVPath := "uploads/cv/" + helpers.RandStringBytesRmndr(12) + encryptDTO.CVFileName
+	VideoPath := "uploads/video/" + helpers.RandStringBytesRmndr(12) + encryptDTO.VideoFileName
 
 	ctx.SaveUploadedFile(&encryptDTO.IDCard, IDCardPath)
 	ctx.SaveUploadedFile(&encryptDTO.CV, CVPath)

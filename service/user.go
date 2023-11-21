@@ -38,6 +38,27 @@ func (us *userService) RegisterUser(ctx context.Context, userDTO dto.UserCreateD
 	if err != nil {
 		return user, err
 	}
+	user.SymmetricKeyAes = helpers.RandStringBytesRmndr(24)
+	user.SymmetricKeyRc4 = helpers.RandStringBytesRmndr(24)
+	user.SymmetricKeyDes = helpers.RandStringBytesRmndr(8)
+
+	bitSize := 4096
+
+	privateKey, err := helpers.generatePrivateKey(bitSize)
+	if err != nil {
+		return user, err
+	}
+
+	publicKeyBytes, err := helpers.generatePublicKey(&privateKey.PublicKey)
+	if err != nil {
+		return user, err
+	}
+
+	privateKeyBytes := helpers.encodePrivateKeyToPEM(privateKey)
+
+	user.PrivateKey = privateKeyBytes
+	user.PublicKey = publicKeyBytes
+
 	return us.userRepository.RegisterUser(ctx, user)
 }
 
