@@ -10,7 +10,7 @@ import (
 	"golang.org/x/crypto/ssh"
 )
 
-func generatePublicKey(privatekey *rsa.PublicKey) ([]byte, error) {
+func GeneratePublicKey(privatekey *rsa.PublicKey) ([]byte, error) {
 	publicRsaKey, err := ssh.NewPublicKey(privatekey)
 	if err != nil {
 		return nil, err
@@ -22,7 +22,7 @@ func generatePublicKey(privatekey *rsa.PublicKey) ([]byte, error) {
 	return pubKeyBytes, nil
 }
 
-func generatePrivateKey(bitSize int) (*rsa.PrivateKey, error) {
+func GeneratePrivateKey(bitSize int) (*rsa.PrivateKey, error) {
 	// Private Key generation
 	privateKey, err := rsa.GenerateKey(rand.Reader, bitSize)
 	if err != nil {
@@ -39,7 +39,7 @@ func generatePrivateKey(bitSize int) (*rsa.PrivateKey, error) {
 	return privateKey, nil
 }
 
-func encodePrivateKeyToPEM(privateKey *rsa.PrivateKey) []byte {
+func EncodePrivateKeyToPEM(privateKey *rsa.PrivateKey) []byte {
 	// Get ASN.1 DER format
 	privDER := x509.MarshalPKCS1PrivateKey(privateKey)
 

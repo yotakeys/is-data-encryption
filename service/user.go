@@ -44,20 +44,20 @@ func (us *userService) RegisterUser(ctx context.Context, userDTO dto.UserCreateD
 
 	bitSize := 4096
 
-	privateKey, err := helpers.generatePrivateKey(bitSize)
+	privateKey, err := helpers.GeneratePrivateKey(bitSize)
 	if err != nil {
 		return user, err
 	}
 
-	publicKeyBytes, err := helpers.generatePublicKey(&privateKey.PublicKey)
+	publicKeyBytes, err := helpers.GeneratePublicKey(&privateKey.PublicKey)
 	if err != nil {
 		return user, err
 	}
 
-	privateKeyBytes := helpers.encodePrivateKeyToPEM(privateKey)
+	privateKeyBytes := helpers.EncodePrivateKeyToPEM(privateKey)
 
-	user.PrivateKey = privateKeyBytes
-	user.PublicKey = publicKeyBytes
+	user.PrivateKey = string(privateKeyBytes)
+	user.PublicKey = string(publicKeyBytes)
 
 	return us.userRepository.RegisterUser(ctx, user)
 }

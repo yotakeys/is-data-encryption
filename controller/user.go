@@ -17,6 +17,7 @@ type UserController interface {
 	DeleteUser(ctx *gin.Context)
 	UpdateUser(ctx *gin.Context)
 	MeUser(ctx *gin.Context)
+	SendEmailEncrypt(ctx *gin.Context)
 }
 
 type userController struct {
@@ -163,5 +164,33 @@ func (uc *userController) MeUser(ctx *gin.Context) {
 	}
 
 	res := common.BuildResponse(true, "Berhasil Mendapatkan User", result)
+	ctx.JSON(http.StatusOK, res)
+}
+
+func (uc *userController) SendEmailEncrypt(ctx *gin.Context) {
+	token := ctx.MustGet("token").(string)
+	userID, err := uc.jwtService.GetUserIDByToken(token)
+	if err != nil {
+		response := common.BuildErrorResponse("Gagal Memproses Request", "Token Tidak Valid", nil)
+		ctx.AbortWithStatusJSON(http.StatusUnauthorized, response)
+		return
+	}
+
+	var user dto.UserUpdateDto
+	err = ctx.ShouldBind(&user)
+	if err != nil {
+		res := common.BuildErrorResponse("Gagal Memproses User", err.Error(), common.EmptyObj{})
+		ctx.JSON(http.StatusBadRequest, res)
+		return
+	}
+
+	result, err := uc.userService.SendEmailEncrypt(ctx.Request.Context(), userID, user.Email)
+	if err != nil {
+		res := common.BuildErrorResponse("Gagal Memproses User", err.Error(), common.EmptyObj{})
+		ctx.JSON(http.StatusBadRequest, res)
+		return
+	}
+
+	res := common.BuildResponse(true, "Berhasil Memproses User", result)
 	ctx.JSON(http.StatusOK, res)
 }
