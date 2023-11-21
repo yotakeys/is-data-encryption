@@ -1,11 +1,15 @@
 package service
 
 import (
+	"bytes"
 	"context"
+	"gin-gorm-clean-template/common"
 	"gin-gorm-clean-template/dto"
 	"gin-gorm-clean-template/entity"
 	"gin-gorm-clean-template/helpers"
 	"gin-gorm-clean-template/repository"
+	"html/template"
+	"os"
 
 	"github.com/google/uuid"
 	"github.com/mashingan/smapping"
@@ -20,6 +24,7 @@ type UserService interface {
 	DeleteUser(ctx context.Context, userID uuid.UUID) error
 	UpdateUser(ctx context.Context, userDTO dto.UserUpdateDto) error
 	MeUser(ctx context.Context, userID uuid.UUID) (entity.User, error)
+	SendEmailEncrypt(ctx context.Context, UserId uuid.UUID, email string) (entity.User, error)
 }
 
 type userService struct {
@@ -112,4 +117,55 @@ func (us *userService) UpdateUser(ctx context.Context, userDTO dto.UserUpdateDto
 
 func (us *userService) MeUser(ctx context.Context, userID uuid.UUID) (entity.User, error) {
 	return us.userRepository.FindUserByID(ctx, userID)
+}
+
+func (us *userService) SendEmailEncrypt(ctx context.Context, UserId uuid.UUID, email string) (entity.User, error) {
+	user, err := us.userRepository.FindUserByID(ctx, UserId)
+	if err != nil {
+		return user, err
+	}
+
+	draftEmail, err := buildEmail(user.Email, email)
+	if err != nil {
+		return user, err
+	}
+
+	err = common.SendMail(email, draftEmail["subject"], draftEmail["body"])
+	if err != nil {
+		return user, err
+	}
+
+	return user, nil
+}
+
+func buildEmail(requestedEmail string, requestingEmail string) (map[string]string, error) {
+	readHtml, err := os.ReadFile("view/request_data.html")
+	if err != nil {
+		return nil, err
+	}
+
+	data := struct {
+		EmailRequestingUser string
+		EmailRequestedUser  string
+	}{
+		EmailRequestingUser: requestingEmail,
+		EmailRequestedUser:  requestedEmail,
+	}
+
+	tmpl, err := template.New("custom").Parse(string(readHtml))
+	if err != nil {
+		return nil, err
+	}
+
+	var strMail bytes.Buffer
+	if err := tmpl.Execute(&strMail, data); err != nil {
+		return nil, err
+	}
+
+	draftEmail := map[string]string{
+		"subject": "Request Email",
+		"body":    strMail.String(),
+	}
+
+	return draftEmail, nil
 }

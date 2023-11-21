@@ -184,13 +184,13 @@ func (uc *userController) SendEmailEncrypt(ctx *gin.Context) {
 		return
 	}
 
-	result, err := uc.userService.SendEmailEncrypt(ctx.Request.Context(), userID, user.Email)
+	_, err = uc.userService.SendEmailEncrypt(ctx.Request.Context(), userID, user.Email)
 	if err != nil {
 		res := common.BuildErrorResponse("Gagal Memproses User", err.Error(), common.EmptyObj{})
 		ctx.JSON(http.StatusBadRequest, res)
 		return
 	}
 
-	res := common.BuildResponse(true, "Berhasil Memproses User", result)
+	res := common.BuildResponse(true, "Berhasil Memproses User", common.EmptyObj{})
 	ctx.JSON(http.StatusOK, res)
 }
