@@ -24,3 +24,8 @@ type UserLoginDTO struct {
 type UserEmail struct {
 	Email string `json:"email" form:"email" binding:"email"`
 }
+
+type AsymmetricUserReqeustDTO struct {
+	RequestingUserEmail string `json:"requesting_user_email" form:"requesting_user_email" binding:"requesting_user_email"`
+	RequestedUserEmail  string `json:"requested_user_email" form:"requested_user_email" binding:"requested_user_email"`
+}

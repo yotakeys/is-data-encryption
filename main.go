@@ -29,12 +29,13 @@ func main() {
 
 		jwtService service.JWTService = service.NewJWTService()
 
-		userRepository repository.UserRepository = repository.NewUserRepository(db)
-		userService    service.UserService       = service.NewUserService(userRepository)
-		userController controller.UserController = controller.NewUserController(userService, jwtService)
-
+		userRepository    repository.UserRepository    = repository.NewUserRepository(db)
 		encryptRepository repository.EncryptRepository = repository.NewEncryptRepository(db)
-		encryptService    service.EncryptService       = service.NewEncryptService(encryptRepository)
+
+		userService    service.UserService    = service.NewUserService(userRepository, encryptRepository)
+		encryptService service.EncryptService = service.NewEncryptService(encryptRepository)
+
+		userController    controller.UserController    = controller.NewUserController(userService, jwtService)
 		encryptController controller.EncryptController = controller.NewEncryptController(encryptService, jwtService)
 	)
 

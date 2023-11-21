@@ -5,6 +5,7 @@ import (
 	"context"
 	"gin-gorm-clean-template/common"
 	"gin-gorm-clean-template/dto"
+	"gin-gorm-clean-template/encrypt"
 	"gin-gorm-clean-template/entity"
 	"gin-gorm-clean-template/helpers"
 	"gin-gorm-clean-template/repository"
@@ -25,15 +26,19 @@ type UserService interface {
 	UpdateUser(ctx context.Context, userDTO dto.UserUpdateDto) error
 	MeUser(ctx context.Context, userID uuid.UUID) (entity.User, error)
 	SendEmailEncrypt(ctx context.Context, UserId uuid.UUID, email string) (entity.User, error)
+	AsymmetricEncrypt(ctx context.Context, requestedUserEmail string, requestingUserEmail string) (entity.User, error)
+	AsymmetricDecrypt(ctx context.Context, userID uuid.UUID, requestingUserEmail string) (entity.User, error)
 }
 
 type userService struct {
-	userRepository repository.UserRepository
+	userRepository    repository.UserRepository
+	encryptRepository repository.EncryptRepository
 }
 
-func NewUserService(ur repository.UserRepository) UserService {
+func NewUserService(ur repository.UserRepository, er repository.EncryptRepository) UserService {
 	return &userService{
-		userRepository: ur,
+		userRepository:    ur,
+		encryptRepository: er,
 	}
 }
 
@@ -168,4 +173,67 @@ func buildEmail(requestedEmail string, requestingEmail string) (map[string]strin
 	}
 
 	return draftEmail, nil
+}
+
+func (us *userService) AsymmetricEncrypt(ctx context.Context, requestedUserEmail, requestingUserEmail string) (entity.User, error) {
+	requestedUser, err := us.userRepository.FindUserByEmail(ctx, requestedUserEmail)
+	if err != nil {
+		return requestedUser, err
+	}
+	requestingUser, err := us.userRepository.FindUserByEmail(ctx, requestingUserEmail)
+	if err != nil {
+		return requestingUser, err
+	}
+
+	encryptedData, err := us.encryptRepository.GetFirstAESEncrpytedData(ctx, requestedUser.ID)
+	if err != nil {
+		return requestedUser, err
+	}
+
+	decrypt_name, err := encrypt.AESDecrypt(encryptedData.Name)
+	if err != nil {
+		return requestedUser, err
+	}
+	decrypt_phone, err := encrypt.AESDecrypt(encryptedData.PhoneNumber)
+	if err != nil {
+		return requestedUser, err
+	}
+	decrypt_idcard, err := encrypt.AESDecrypt(encryptedData.IDCardUrl)
+	if err != nil {
+		return requestedUser, err
+	}
+	decrypt_cv, err := encrypt.AESDecrypt(encryptedData.CVUrl)
+	if err != nil {
+		return requestedUser, err
+	}
+	decrypt_video, err := encrypt.AESDecrypt(encryptedData.VideoUrl)
+	if err != nil {
+		return requestedUser, err
+	}
+
+	asymmetric := entity.Asymmetric{
+		RequestingUserID: requestingUser.ID,
+		RequestedUserID:  requestedUser.ID,
+		Name:             encrypt.EncryptRSA(decrypt_name, requestingUser.PublicKey),
+		PhoneNumber:      encrypt.EncryptRSA(decrypt_phone, requestingUser.PublicKey),
+		IDCardUrl:        encrypt.EncryptRSA(decrypt_idcard, requestingUser.PublicKey),
+		CVUrl:            encrypt.EncryptRSA(decrypt_cv, requestingUser.PublicKey),
+		VideoUrl:         encrypt.EncryptRSA(decrypt_video, requestingUser.PublicKey),
+	}
+
+	_, err = us.userRepository.CreateAsymmetric(ctx, asymmetric)
+	if err != nil {
+		return requestedUser, err
+	}
+
+	return requestedUser, nil
+}
+
+func (us *userService) AsymmetricDecrypt(ctx context.Context, userID uuid.UUID, requestingUserEmail string) (entity.User, error) {
+	requestedUser, err := us.userRepository.FindUserByEmail(ctx, requestingUserEmail)
+	// if err != nil {
+	return requestedUser, err
+	// }
+
+	// asymmetric, err := us.userRepository.FindAsymmetric(ctx, userID, requestedUser.ID)
 }

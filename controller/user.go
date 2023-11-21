@@ -18,6 +18,8 @@ type UserController interface {
 	UpdateUser(ctx *gin.Context)
 	MeUser(ctx *gin.Context)
 	SendEmailEncrypt(ctx *gin.Context)
+	AsymmetricEncrypt(ctx *gin.Context)
+	AsymmetricDecrypt(ctx *gin.Context)
 }
 
 type userController struct {
@@ -185,6 +187,49 @@ func (uc *userController) SendEmailEncrypt(ctx *gin.Context) {
 	}
 
 	_, err = uc.userService.SendEmailEncrypt(ctx.Request.Context(), userID, user.Email)
+	if err != nil {
+		res := common.BuildErrorResponse("Gagal Memproses User", err.Error(), common.EmptyObj{})
+		ctx.JSON(http.StatusBadRequest, res)
+		return
+	}
+
+	res := common.BuildResponse(true, "Berhasil Memproses User", common.EmptyObj{})
+	ctx.JSON(http.StatusOK, res)
+}
+
+func (uc *userController) AsymmetricEncrypt(ctx *gin.Context) {
+	requestedUserEmail := ctx.Query("requested_user_email")
+	requestingUserEmail := ctx.Query("requesting_user_email")
+
+	_, err := uc.userService.AsymmetricEncrypt(ctx.Request.Context(), requestedUserEmail, requestingUserEmail)
+	if err != nil {
+		res := common.BuildErrorResponse("Gagal Memproses User", err.Error(), common.EmptyObj{})
+		ctx.JSON(http.StatusBadRequest, res)
+		return
+	}
+
+	res := common.BuildResponse(true, "Berhasil Memproses User", common.EmptyObj{})
+	ctx.JSON(http.StatusOK, res)
+}
+
+func (uc *userController) AsymmetricDecrypt(ctx *gin.Context) {
+	token := ctx.MustGet("token").(string)
+	userID, err := uc.jwtService.GetUserIDByToken(token)
+	if err != nil {
+		response := common.BuildErrorResponse("Gagal Memproses Request", "Token Tidak Valid", nil)
+		ctx.AbortWithStatusJSON(http.StatusUnauthorized, response)
+		return
+	}
+
+	var user dto.UserEmail
+	err = ctx.ShouldBind(&user)
+	if err != nil {
+		res := common.BuildErrorResponse("Gagal Memproses User", err.Error(), common.EmptyObj{})
+		ctx.JSON(http.StatusBadRequest, res)
+		return
+	}
+
+	_, err = uc.userService.AsymmetricDecrypt(ctx.Request.Context(), userID, user.Email)
 	if err != nil {
 		res := common.BuildErrorResponse("Gagal Memproses User", err.Error(), common.EmptyObj{})
 		ctx.JSON(http.StatusBadRequest, res)
