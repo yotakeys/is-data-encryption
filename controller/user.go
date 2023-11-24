@@ -18,6 +18,7 @@ type UserController interface {
 	UpdateUser(ctx *gin.Context)
 	MeUser(ctx *gin.Context)
 	SendEmailEncrypt(ctx *gin.Context)
+	SendEmailResponse(ctx *gin.Context)
 	AsymmetricEncrypt(ctx *gin.Context)
 	AsymmetricDecrypt(ctx *gin.Context)
 }
@@ -194,6 +195,21 @@ func (uc *userController) SendEmailEncrypt(ctx *gin.Context) {
 	}
 
 	res := common.BuildResponse(true, "Berhasil Memproses User", common.EmptyObj{})
+	ctx.JSON(http.StatusOK, res)
+}
+
+func (uc *userController) SendEmailResponse(ctx *gin.Context) {
+	emailSend := ctx.Query("email")
+	responseSend := ctx.Query("response")
+
+	err := uc.userService.SendEmailResponse(ctx.Request.Context(), emailSend, responseSend)
+	if err != nil {
+		res := common.BuildErrorResponse("Gagal Memproses Email", err.Error(), common.EmptyObj{})
+		ctx.JSON(http.StatusBadRequest, res)
+		return
+	}
+
+	res := common.BuildResponse(true, "Berhasil Memproses Email", common.EmptyObj{})
 	ctx.JSON(http.StatusOK, res)
 }
 

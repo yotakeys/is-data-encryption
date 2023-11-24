@@ -27,6 +27,7 @@ type UserService interface {
 	UpdateUser(ctx context.Context, userDTO dto.UserUpdateDto) error
 	MeUser(ctx context.Context, userID uuid.UUID) (entity.User, error)
 	SendEmailEncrypt(ctx context.Context, UserId uuid.UUID, email string) (entity.User, error)
+	SendEmailResponse(ctx context.Context, email string, response string) error
 	AsymmetricEncrypt(ctx context.Context, requestedUserEmail string, requestingUserEmail string) (entity.User, error)
 	AsymmetricDecrypt(ctx context.Context, userID uuid.UUID, requestingUserEmail string) ([]dto.DecryptRSAResponseDTO, error)
 }
@@ -137,7 +138,7 @@ func (us *userService) SendEmailEncrypt(ctx context.Context, UserId uuid.UUID, e
 		return user, err
 	}
 
-	draftEmail, err := buildEmail(user.Email, email)
+	draftEmail, err := buildEmailEncrypt(user.Email, email)
 	if err != nil {
 		return user, err
 	}
@@ -150,7 +151,30 @@ func (us *userService) SendEmailEncrypt(ctx context.Context, UserId uuid.UUID, e
 	return user, nil
 }
 
-func buildEmail(requestedEmail string, requestingEmail string) (map[string]string, error) {
+func (us *userService) SendEmailResponse(ctx context.Context, email string, response string) error {
+	if response != "accept" && response != "decline" {
+		return errors.New("response must be accept or decline")
+	}
+	emailResponse, err := os.ReadFile("view/accept_response.html")
+	if err != nil {
+		return err
+	}
+	if response == "decline" {
+		emailResponse, err = os.ReadFile("view/decline_response.html")
+		if err != nil {
+			return err
+		}
+	}
+
+	err = common.SendMail(email, "Response Email Data", string(emailResponse))
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func buildEmailEncrypt(requestedEmail string, requestingEmail string) (map[string]string, error) {
 	readHtml, err := os.ReadFile("view/request_data.html")
 	if err != nil {
 		return nil, err
