@@ -21,6 +21,7 @@ type UserController interface {
 	SendEmailResponse(ctx *gin.Context)
 	AsymmetricEncrypt(ctx *gin.Context)
 	AsymmetricDecrypt(ctx *gin.Context)
+	GetListRequestingUser(ctx *gin.Context)
 }
 
 type userController struct {
@@ -214,10 +215,17 @@ func (uc *userController) SendEmailResponse(ctx *gin.Context) {
 }
 
 func (uc *userController) AsymmetricEncrypt(ctx *gin.Context) {
-	requestedUserEmail := ctx.Query("requested_user_email")
+	responseSend := ctx.Query("response")
+	token := ctx.MustGet("token").(string)
+	userID, err := uc.jwtService.GetUserIDByToken(token)
+	if err != nil {
+		response := common.BuildErrorResponse("Gagal Memproses Request", "Token Tidak Valid", nil)
+		ctx.AbortWithStatusJSON(http.StatusUnauthorized, response)
+		return
+	}
 	requestingUserEmail := ctx.Query("requesting_user_email")
 
-	_, err := uc.userService.AsymmetricEncrypt(ctx.Request.Context(), requestedUserEmail, requestingUserEmail)
+	_, err = uc.userService.AsymmetricEncrypt(ctx.Request.Context(), userID, requestingUserEmail, responseSend)
 	if err != nil {
 		res := common.BuildErrorResponse("Gagal Memproses User", err.Error(), common.EmptyObj{})
 		ctx.JSON(http.StatusBadRequest, res)
@@ -253,5 +261,25 @@ func (uc *userController) AsymmetricDecrypt(ctx *gin.Context) {
 	}
 
 	res := common.BuildResponse(true, "Berhasil Memproses User", result)
+	ctx.JSON(http.StatusOK, res)
+}
+
+func (uc *userController) GetListRequestingUser(ctx *gin.Context) {
+	token := ctx.MustGet("token").(string)
+	userID, err := uc.jwtService.GetUserIDByToken(token)
+	if err != nil {
+		response := common.BuildErrorResponse("Gagal Memproses Request", "Token Tidak Valid", nil)
+		ctx.AbortWithStatusJSON(http.StatusUnauthorized, response)
+		return
+	}
+
+	result, err := uc.userService.GetListRequestingUser(ctx.Request.Context(), userID)
+	if err != nil {
+		res := common.BuildErrorResponse("Gagal Mendapatkan User", err.Error(), common.EmptyObj{})
+		ctx.JSON(http.StatusBadRequest, res)
+		return
+	}
+
+	res := common.BuildResponse(true, "Berhasil Mendapatkan User", result)
 	ctx.JSON(http.StatusOK, res)
 }

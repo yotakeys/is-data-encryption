@@ -16,7 +16,9 @@ type UserRepository interface {
 	DeleteUser(ctx context.Context, userID uuid.UUID) error
 	UpdateUser(ctx context.Context, user entity.User) error
 	CreateAsymmetric(ctx context.Context, asymmetric entity.Asymmetric) (entity.Asymmetric, error)
+	UpdateAsymmetric(ctx context.Context, asymmetric entity.Asymmetric) (entity.Asymmetric, error)
 	FindAsymmetricByUserID(ctx context.Context, requestingUser uuid.UUID, requestedUser uuid.UUID) ([]entity.Asymmetric, error)
+	FindRequestingUser(ctx context.Context, requestedUser uuid.UUID) ([]entity.Asymmetric, error)
 }
 
 type userConnection struct {
@@ -90,6 +92,14 @@ func (db *userConnection) CreateAsymmetric(ctx context.Context, asymmetric entit
 	return asymmetric, nil
 }
 
+func (db *userConnection) UpdateAsymmetric(ctx context.Context, asymmetric entity.Asymmetric) (entity.Asymmetric, error) {
+	uc := db.connection.Updates(&asymmetric)
+	if uc.Error != nil {
+		return entity.Asymmetric{}, uc.Error
+	}
+	return asymmetric, nil
+}
+
 func (db *userConnection) FindAsymmetric(ctx context.Context, userID uuid.UUID) ([]entity.Asymmetric, error) {
 	var listAsymmetric []entity.Asymmetric
 	tx := db.connection.Where("user_id = ?", userID).Find(&listAsymmetric)
@@ -101,7 +111,17 @@ func (db *userConnection) FindAsymmetric(ctx context.Context, userID uuid.UUID) 
 
 func (db *userConnection) FindAsymmetricByUserID(ctx context.Context, requestingUser uuid.UUID, requestedUser uuid.UUID) ([]entity.Asymmetric, error) {
 	var listAsymmetric []entity.Asymmetric
-	tx := db.connection.Where("requesting_user_id = ? AND requested_user_id = ?", requestingUser, requestedUser).Find(&listAsymmetric)
+	tx := db.connection.Where("requesting_user_id = ?", requestingUser).Where("requested_user_id = ?", requestedUser).Find(&listAsymmetric)
+	if tx.Error != nil {
+		return []entity.Asymmetric{}, tx.Error
+	}
+	return listAsymmetric, nil
+}
+
+func (db *userConnection) FindRequestingUser(ctx context.Context, requestedUser uuid.UUID) ([]entity.Asymmetric, error) {
+	println("requestedUser", requestedUser.String())
+	var listAsymmetric []entity.Asymmetric
+	tx := db.connection.Where("requested_user_id = ?", requestedUser).Find(&listAsymmetric)
 	if tx.Error != nil {
 		return []entity.Asymmetric{}, tx.Error
 	}

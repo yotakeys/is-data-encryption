@@ -28,8 +28,9 @@ type UserService interface {
 	MeUser(ctx context.Context, userID uuid.UUID) (entity.User, error)
 	SendEmailEncrypt(ctx context.Context, UserId uuid.UUID, email string) (entity.User, error)
 	SendEmailResponse(ctx context.Context, email string, response string) error
-	AsymmetricEncrypt(ctx context.Context, requestedUserEmail string, requestingUserEmail string) (entity.User, error)
+	AsymmetricEncrypt(ctx context.Context, requestedUserID uuid.UUID, requestingUserEmail string, response string) (entity.User, error)
 	AsymmetricDecrypt(ctx context.Context, userID uuid.UUID, requestingUserEmail string) ([]dto.DecryptRSAResponseDTO, error)
+	GetListRequestingUser(ctx context.Context, userID uuid.UUID) ([]entity.User, error)
 }
 
 type userService struct {
@@ -127,13 +128,34 @@ func (us *userService) MeUser(ctx context.Context, userID uuid.UUID) (entity.Use
 }
 
 func (us *userService) SendEmailEncrypt(ctx context.Context, UserId uuid.UUID, email string) (entity.User, error) {
-
-	_, err := us.userRepository.FindUserByEmail(ctx, email)
+	requestedUser, err := us.userRepository.FindUserByEmail(ctx, email)
 	if err != nil {
 		return entity.User{}, errors.New("email user yang di request tidak terdaftar")
 	}
+	asymmetrics, err := us.userRepository.FindAsymmetricByUserID(ctx, UserId, requestedUser.ID)
+	if err != nil || len(asymmetrics) > 0 {
+		return entity.User{}, errors.New("user sudah melakukan request enkripsi")
+	}
+
+	encrypt, err := us.encryptRepository.GetFirstAESEncrpytedData(ctx, requestedUser.ID)
+	if err != nil {
+		return entity.User{}, err
+	}
+	if encrypt == (entity.Encrypt{}) {
+		return entity.User{}, errors.New("user belum melakukan enkripsi")
+	}
 
 	user, err := us.userRepository.FindUserByID(ctx, UserId)
+	if err != nil {
+		return user, err
+	}
+
+	asymmetric := entity.Asymmetric{
+		RequestedUserID:  requestedUser.ID,
+		RequestingUserID: UserId,
+	}
+
+	_, err = us.userRepository.CreateAsymmetric(ctx, asymmetric)
 	if err != nil {
 		return user, err
 	}
@@ -206,10 +228,11 @@ func buildEmailEncrypt(requestedEmail string, requestingEmail string) (map[strin
 	return draftEmail, nil
 }
 
-func (us *userService) AsymmetricEncrypt(ctx context.Context, requestedUserEmail, requestingUserEmail string) (entity.User, error) {
-	requestedUser, err := us.userRepository.FindUserByEmail(ctx, requestedUserEmail)
+func (us *userService) AsymmetricEncrypt(ctx context.Context, requestedUserID uuid.UUID, requestingUserEmail string, response string) (entity.User, error) {
+	us.SendEmailResponse(ctx, requestingUserEmail, response)
+	requestedUser, err := us.userRepository.FindUserByID(ctx, requestedUserID)
 	if err != nil {
-		return requestedUser, errors.New("email user yang di request tidak terdaftar")
+		return requestedUser, errors.New("user tidak ditemukan")
 	}
 	requestingUser, err := us.userRepository.FindUserByEmail(ctx, requestingUserEmail)
 	if err != nil {
@@ -247,7 +270,13 @@ func (us *userService) AsymmetricEncrypt(ctx context.Context, requestedUserEmail
 		return requestedUser, err
 	}
 
+	asymmetrics, err := us.userRepository.FindAsymmetricByUserID(ctx, requestingUser.ID, requestedUser.ID)
+	if err != nil || len(asymmetrics) == 0 {
+		return requestedUser, errors.New("user belum melakukan request enkripsi")
+	}
+
 	asymmetric := entity.Asymmetric{
+		ID:               asymmetrics[0].ID,
 		RequestingUserID: requestingUser.ID,
 		RequestedUserID:  requestedUser.ID,
 		Name:             encrypt.EncryptRSA(decrypt_name, requestingUser.PublicKey),
@@ -257,7 +286,7 @@ func (us *userService) AsymmetricEncrypt(ctx context.Context, requestedUserEmail
 		VideoUrl:         encrypt.EncryptRSA(decrypt_video, requestingUser.PublicKey),
 	}
 
-	_, err = us.userRepository.CreateAsymmetric(ctx, asymmetric)
+	_, err = us.userRepository.UpdateAsymmetric(ctx, asymmetric)
 	if err != nil {
 		return requestedUser, err
 	}
@@ -266,7 +295,6 @@ func (us *userService) AsymmetricEncrypt(ctx context.Context, requestedUserEmail
 }
 
 func (us *userService) AsymmetricDecrypt(ctx context.Context, userID uuid.UUID, requestingUserEmail string) ([]dto.DecryptRSAResponseDTO, error) {
-
 	requestedUser, err := us.userRepository.FindUserByEmail(ctx, requestingUserEmail)
 	if err != nil {
 		return []dto.DecryptRSAResponseDTO{}, errors.New("email user yang di request tidak terdaftar")
@@ -295,4 +323,21 @@ func (us *userService) AsymmetricDecrypt(ctx context.Context, userID uuid.UUID, 
 	}
 
 	return decryptResponse, nil
+}
+
+func (us *userService) GetListRequestingUser(ctx context.Context, userID uuid.UUID) ([]entity.User, error) {
+	requestingUsers, err := us.userRepository.FindRequestingUser(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+	listUsers := []entity.User{}
+	for _, requestingUser := range requestingUsers {
+		user, err := us.userRepository.FindUserByID(ctx, requestingUser.RequestingUserID)
+		if err != nil {
+			return nil, err
+		}
+		listUsers = append(listUsers, user)
+	}
+
+	return listUsers, nil
 }
