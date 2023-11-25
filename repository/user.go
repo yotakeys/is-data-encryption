@@ -19,6 +19,7 @@ type UserRepository interface {
 	UpdateAsymmetric(ctx context.Context, asymmetric entity.Asymmetric) (entity.Asymmetric, error)
 	FindAsymmetricByUserID(ctx context.Context, requestingUser uuid.UUID, requestedUser uuid.UUID) ([]entity.Asymmetric, error)
 	FindRequestingUser(ctx context.Context, requestedUser uuid.UUID) ([]entity.Asymmetric, error)
+	DeleteRequestingUser(ctx context.Context, requestedUser uuid.UUID, requestingUser uuid.UUID) error
 }
 
 type userConnection struct {
@@ -126,4 +127,12 @@ func (db *userConnection) FindRequestingUser(ctx context.Context, requestedUser 
 		return []entity.Asymmetric{}, tx.Error
 	}
 	return listAsymmetric, nil
+}
+
+func (db *userConnection) DeleteRequestingUser(ctx context.Context, requestedUser uuid.UUID, requestingUser uuid.UUID) error {
+	uc := db.connection.Where("requested_user_id = ?", requestedUser).Where("requesting_user_id = ?", requestingUser).Delete(&entity.Asymmetric{})
+	if uc.Error != nil {
+		return uc.Error
+	}
+	return nil
 }

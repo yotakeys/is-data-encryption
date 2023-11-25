@@ -230,6 +230,7 @@ func buildEmailEncrypt(requestedEmail string, requestingEmail string) (map[strin
 
 func (us *userService) AsymmetricEncrypt(ctx context.Context, requestedUserID uuid.UUID, requestingUserEmail string, response string) (entity.User, error) {
 	us.SendEmailResponse(ctx, requestingUserEmail, response)
+
 	requestedUser, err := us.userRepository.FindUserByID(ctx, requestedUserID)
 	if err != nil {
 		return requestedUser, errors.New("user tidak ditemukan")
@@ -237,6 +238,15 @@ func (us *userService) AsymmetricEncrypt(ctx context.Context, requestedUserID uu
 	requestingUser, err := us.userRepository.FindUserByEmail(ctx, requestingUserEmail)
 	if err != nil {
 		return requestingUser, errors.New("email user yang me request tidak terdaftar")
+	}
+
+	if response == "decline" {
+		err := us.userRepository.DeleteRequestingUser(ctx, requestedUser.ID, requestingUser.ID)
+		if err != nil {
+			return requestedUser, err
+		}
+
+		return requestedUser, nil
 	}
 
 	dataRequested, err := us.encryptRepository.GetAllEncrypt(ctx, requestedUser.ID)
