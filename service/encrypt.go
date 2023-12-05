@@ -20,16 +20,22 @@ type EncryptService interface {
 
 type encryptService struct {
 	encryptRepository repository.EncryptRepository
+	userRepository    repository.UserRepository
 }
 
-func NewEncryptService(ur repository.EncryptRepository) EncryptService {
+func NewEncryptService(ur repository.EncryptRepository, us repository.UserRepository) EncryptService {
 	return &encryptService{
 		encryptRepository: ur,
+		userRepository:    us,
 	}
 }
 
 func (us *encryptService) CreateEncrypt(ctx *gin.Context, encryptDTO dto.EncryptCreateDto, userID uuid.UUID, encryptMethod string) (entity.Encrypt, error) {
 
+	user, err := us.userRepository.FindUserByID(ctx, userID)
+	if err != nil {
+		return entity.Encrypt{}, err
+	}
 	IDCardPath := "uploads/id-card/" + helpers.RandStringBytesRmndr(12) + encryptDTO.IDCardFileName
 	CVPath := "uploads/cv/" + helpers.RandStringBytesRmndr(12) + encryptDTO.CVFileName
 	VideoPath := "uploads/video/" + helpers.RandStringBytesRmndr(12) + encryptDTO.VideoFileName
@@ -41,7 +47,7 @@ func (us *encryptService) CreateEncrypt(ctx *gin.Context, encryptDTO dto.Encrypt
 	var encryptTime float64
 
 	if encryptMethod == "AES" {
-		encrypten_name, data, err := encrypt.AESEncrypt(encryptDTO.Name)
+		encrypten_name, data, err := encrypt.AESEncrypt(encryptDTO.Name, user.SymmetricKeyAes)
 		if err != nil || data == nil {
 			return entity.Encrypt{}, err
 		}
@@ -53,7 +59,7 @@ func (us *encryptService) CreateEncrypt(ctx *gin.Context, encryptDTO dto.Encrypt
 
 		encryptDTO.Name = encrypten_name
 
-		encrypten_phone, data, err := encrypt.AESEncrypt(encryptDTO.PhoneNumber)
+		encrypten_phone, data, err := encrypt.AESEncrypt(encryptDTO.PhoneNumber, user.SymmetricKeyAes)
 
 		if err != nil || data == nil {
 			return entity.Encrypt{}, err
@@ -69,7 +75,7 @@ func (us *encryptService) CreateEncrypt(ctx *gin.Context, encryptDTO dto.Encrypt
 			return entity.Encrypt{}, err
 		}
 
-		encrypted_path_idcard, data, err := encrypt.AESEncrypt(IDCardPath)
+		encrypted_path_idcard, data, err := encrypt.AESEncrypt(IDCardPath, user.SymmetricKeyAes)
 		if err != nil || data == nil {
 			return entity.Encrypt{}, err
 		}
@@ -83,7 +89,7 @@ func (us *encryptService) CreateEncrypt(ctx *gin.Context, encryptDTO dto.Encrypt
 			return entity.Encrypt{}, err
 		}
 
-		encrypted_path_cv, data, err := encrypt.AESEncrypt(CVPath)
+		encrypted_path_cv, data, err := encrypt.AESEncrypt(CVPath, user.SymmetricKeyAes)
 		if err != nil || data == nil {
 			return entity.Encrypt{}, err
 		}
@@ -97,7 +103,7 @@ func (us *encryptService) CreateEncrypt(ctx *gin.Context, encryptDTO dto.Encrypt
 			return entity.Encrypt{}, err
 		}
 
-		encrypted_path_video, data, err := encrypt.AESEncrypt(VideoPath)
+		encrypted_path_video, data, err := encrypt.AESEncrypt(VideoPath, user.SymmetricKeyAes)
 		if err != nil || data == nil {
 			return entity.Encrypt{}, err
 		}
@@ -269,6 +275,10 @@ func (us *encryptService) CreateEncrypt(ctx *gin.Context, encryptDTO dto.Encrypt
 
 func (us *encryptService) GetAllEncrypt(ctx context.Context, userID uuid.UUID) ([]entity.Encrypt, error) {
 
+	user, err := us.userRepository.FindUserByID(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
 	datas, err := us.encryptRepository.GetAllEncrypt(ctx, userID)
 
 	if err != nil {
@@ -277,23 +287,23 @@ func (us *encryptService) GetAllEncrypt(ctx context.Context, userID uuid.UUID) (
 
 	for i, data := range datas {
 		if data.EncryptMethod == "AES" {
-			decrypt_name, err := encrypt.AESDecrypt(data.Name)
+			decrypt_name, err := encrypt.AESDecrypt(data.Name, user.SymmetricKeyAes)
 			if err != nil {
 				return nil, err
 			}
-			decrypt_phone, err := encrypt.AESDecrypt(data.PhoneNumber)
+			decrypt_phone, err := encrypt.AESDecrypt(data.PhoneNumber, user.SymmetricKeyAes)
 			if err != nil {
 				return nil, err
 			}
-			decrypt_idcard, err := encrypt.AESDecrypt(data.IDCardUrl)
+			decrypt_idcard, err := encrypt.AESDecrypt(data.IDCardUrl, user.SymmetricKeyAes)
 			if err != nil {
 				return nil, err
 			}
-			decrypt_cv, err := encrypt.AESDecrypt(data.CVUrl)
+			decrypt_cv, err := encrypt.AESDecrypt(data.CVUrl, user.SymmetricKeyAes)
 			if err != nil {
 				return nil, err
 			}
-			decrypt_video, err := encrypt.AESDecrypt(data.VideoUrl)
+			decrypt_video, err := encrypt.AESDecrypt(data.VideoUrl, user.SymmetricKeyAes)
 			if err != nil {
 				return nil, err
 			}

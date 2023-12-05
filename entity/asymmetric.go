@@ -19,5 +19,7 @@ type Asymmetric struct {
 	CVUrl       string `json:"cv_url" binding:"cv_url"`
 	VideoUrl    string `json:"video_url" binding:"video_url"`
 
+	SymmetricKeyAes string `json:"symmetric_key_aes"`
+
 	Timestamp
 }

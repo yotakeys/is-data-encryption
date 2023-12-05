@@ -33,7 +33,7 @@ func main() {
 		encryptRepository repository.EncryptRepository = repository.NewEncryptRepository(db)
 
 		userService    service.UserService    = service.NewUserService(userRepository, encryptRepository)
-		encryptService service.EncryptService = service.NewEncryptService(encryptRepository)
+		encryptService service.EncryptService = service.NewEncryptService(encryptRepository, userRepository)
 
 		userController    controller.UserController    = controller.NewUserController(userService, jwtService)
 		encryptController controller.EncryptController = controller.NewEncryptController(encryptService, jwtService)

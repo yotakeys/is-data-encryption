@@ -259,23 +259,23 @@ func (us *userService) AsymmetricEncrypt(ctx context.Context, requestedUserID uu
 		return requestedUser, err
 	}
 
-	decrypt_name, err := encrypt.AESDecrypt(encryptedData.Name)
+	decrypt_name, err := encrypt.AESDecrypt(encryptedData.Name, requestedUser.SymmetricKeyAes)
 	if err != nil {
 		return requestedUser, err
 	}
-	decrypt_phone, err := encrypt.AESDecrypt(encryptedData.PhoneNumber)
+	decrypt_phone, err := encrypt.AESDecrypt(encryptedData.PhoneNumber, requestedUser.SymmetricKeyAes)
 	if err != nil {
 		return requestedUser, err
 	}
-	decrypt_idcard, err := encrypt.AESDecrypt(encryptedData.IDCardUrl)
+	decrypt_idcard, err := encrypt.AESDecrypt(encryptedData.IDCardUrl, requestedUser.SymmetricKeyAes)
 	if err != nil {
 		return requestedUser, err
 	}
-	decrypt_cv, err := encrypt.AESDecrypt(encryptedData.CVUrl)
+	decrypt_cv, err := encrypt.AESDecrypt(encryptedData.CVUrl, requestedUser.SymmetricKeyAes)
 	if err != nil {
 		return requestedUser, err
 	}
-	decrypt_video, err := encrypt.AESDecrypt(encryptedData.VideoUrl)
+	decrypt_video, err := encrypt.AESDecrypt(encryptedData.VideoUrl, requestedUser.SymmetricKeyAes)
 	if err != nil {
 		return requestedUser, err
 	}
@@ -285,15 +285,23 @@ func (us *userService) AsymmetricEncrypt(ctx context.Context, requestedUserID uu
 		return requestedUser, errors.New("user belum melakukan request enkripsi")
 	}
 
+	symmetricKeyAes := helpers.RandStringBytesRmndr(24)
+	nameEncrypt, _, _ := encrypt.AESEncrypt(decrypt_name, symmetricKeyAes)
+	phoneNumberEncrypt, _, _ := encrypt.AESEncrypt(decrypt_phone, symmetricKeyAes)
+	idCardEncrypt, _, _ := encrypt.AESEncrypt(decrypt_idcard, symmetricKeyAes)
+	cvEncrypt, _, _ := encrypt.AESEncrypt(decrypt_cv, symmetricKeyAes)
+	videoEncrypt, _, _ := encrypt.AESEncrypt(decrypt_video, symmetricKeyAes)
+
 	asymmetric := entity.Asymmetric{
 		ID:               asymmetrics[0].ID,
 		RequestingUserID: requestingUser.ID,
 		RequestedUserID:  requestedUser.ID,
-		Name:             encrypt.EncryptRSA(decrypt_name, requestingUser.PublicKey),
-		PhoneNumber:      encrypt.EncryptRSA(decrypt_phone, requestingUser.PublicKey),
-		IDCardUrl:        encrypt.EncryptRSA(decrypt_idcard, requestingUser.PublicKey),
-		CVUrl:            encrypt.EncryptRSA(decrypt_cv, requestingUser.PublicKey),
-		VideoUrl:         encrypt.EncryptRSA(decrypt_video, requestingUser.PublicKey),
+		Name:             nameEncrypt,
+		PhoneNumber:      phoneNumberEncrypt,
+		IDCardUrl:        idCardEncrypt,
+		CVUrl:            cvEncrypt,
+		VideoUrl:         videoEncrypt,
+		SymmetricKeyAes:  encrypt.EncryptRSA(symmetricKeyAes, requestingUser.PublicKey),
 	}
 
 	_, err = us.userRepository.UpdateAsymmetric(ctx, asymmetric)
@@ -323,12 +331,18 @@ func (us *userService) AsymmetricDecrypt(ctx context.Context, userID uuid.UUID, 
 	var decryptResponse []dto.DecryptRSAResponseDTO
 
 	for _, asymmetric := range asymmetrics {
+		decryptedSymmetric := encrypt.DecryptRSA(asymmetric.SymmetricKeyAes, requestingUser.PrivateKey)
+		decryptedName, _ := encrypt.AESDecrypt(asymmetric.Name, decryptedSymmetric)
+		decryptedPhoneNumber, _ := encrypt.AESDecrypt(asymmetric.PhoneNumber, decryptedSymmetric)
+		decryptedIDCard, _ := encrypt.AESDecrypt(asymmetric.IDCardUrl, decryptedSymmetric)
+		decryptedCV, _ := encrypt.AESDecrypt(asymmetric.CVUrl, decryptedSymmetric)
+		decryptedVideo, _ := encrypt.AESDecrypt(asymmetric.VideoUrl, decryptedSymmetric)
 		decryptResponse = append(decryptResponse, dto.DecryptRSAResponseDTO{
-			Name:        encrypt.DecryptRSA(asymmetric.Name, requestingUser.PrivateKey),
-			PhoneNumber: encrypt.DecryptRSA(asymmetric.PhoneNumber, requestingUser.PrivateKey),
-			IDCard:      encrypt.DecryptRSA(asymmetric.IDCardUrl, requestingUser.PrivateKey),
-			CV:          encrypt.DecryptRSA(asymmetric.CVUrl, requestingUser.PrivateKey),
-			Video:       encrypt.DecryptRSA(asymmetric.VideoUrl, requestingUser.PrivateKey),
+			Name:        decryptedName,
+			PhoneNumber: decryptedPhoneNumber,
+			IDCard:      decryptedIDCard,
+			CV:          decryptedCV,
+			Video:       decryptedVideo,
 		})
 	}
 
