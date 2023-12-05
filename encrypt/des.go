@@ -12,13 +12,13 @@ import (
 )
 
 // Encrypt data using DES with PKCS7 padding
-func DESEncrypt(stringToEncrypt string) (encryptedString string, data map[string]interface{}, err error) {
+func DESEncrypt(stringToEncrypt string, DESKey string) (encryptedString string, data map[string]interface{}, err error) {
 	elapsedTimer := timerWithReturn("DESEncrypt")
 	defer elapsedTimer()
 
 	time.Sleep(1 * time.Second)
 
-	key := []byte(os.Getenv("ENCRYPT_KEY_DES"))
+	key := []byte(DESKey)
 	plaintext := []byte(stringToEncrypt)
 
 	if len(key) != 8 {
@@ -51,8 +51,8 @@ func DESEncrypt(stringToEncrypt string) (encryptedString string, data map[string
 }
 
 // Decrypt data using DES with PKCS7 padding
-func DESDecrypt(encryptedString string) (decryptedString string, err error) {
-	key := []byte(os.Getenv("ENCRYPT_KEY_DES"))
+func DESDecrypt(encryptedString string, DESKey string) (decryptedString string, err error) {
+	key := []byte(DESKey)
 	enc, _ := hex.DecodeString(encryptedString)
 
 	if len(key) != 8 {

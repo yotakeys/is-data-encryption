@@ -118,7 +118,7 @@ func (us *encryptService) CreateEncrypt(ctx *gin.Context, encryptDTO dto.Encrypt
 		}
 
 	} else if encryptMethod == "RC4" {
-		encrypten_name, data, err := encrypt.RC4Encrypt(encryptDTO.Name)
+		encrypten_name, data, err := encrypt.RC4Encrypt(encryptDTO.Name, user.SymmetricKeyRc4)
 		if err != nil || data == nil {
 			return entity.Encrypt{}, err
 		}
@@ -131,7 +131,7 @@ func (us *encryptService) CreateEncrypt(ctx *gin.Context, encryptDTO dto.Encrypt
 		if err != nil || data == nil {
 			return entity.Encrypt{}, err
 		}
-		encrypten_phone, data, err := encrypt.RC4Encrypt(encryptDTO.PhoneNumber)
+		encrypten_phone, data, err := encrypt.RC4Encrypt(encryptDTO.PhoneNumber, user.SymmetricKeyRc4)
 		if err != nil || data == nil {
 			return entity.Encrypt{}, err
 		}
@@ -145,7 +145,7 @@ func (us *encryptService) CreateEncrypt(ctx *gin.Context, encryptDTO dto.Encrypt
 			return entity.Encrypt{}, err
 		}
 
-		encrypted_path_idcard, data, err := encrypt.RC4Encrypt(IDCardPath)
+		encrypted_path_idcard, data, err := encrypt.RC4Encrypt(IDCardPath, user.SymmetricKeyRc4)
 		if err != nil || data == nil {
 			return entity.Encrypt{}, err
 		}
@@ -159,7 +159,7 @@ func (us *encryptService) CreateEncrypt(ctx *gin.Context, encryptDTO dto.Encrypt
 			return entity.Encrypt{}, err
 		}
 
-		encrypted_path_cv, data, err := encrypt.RC4Encrypt(CVPath)
+		encrypted_path_cv, data, err := encrypt.RC4Encrypt(CVPath, user.SymmetricKeyRc4)
 		if err != nil || data == nil {
 			return entity.Encrypt{}, err
 		}
@@ -173,7 +173,7 @@ func (us *encryptService) CreateEncrypt(ctx *gin.Context, encryptDTO dto.Encrypt
 			return entity.Encrypt{}, err
 		}
 
-		encrypted_path_video, data, err := encrypt.RC4Encrypt(VideoPath)
+		encrypted_path_video, data, err := encrypt.RC4Encrypt(VideoPath, user.SymmetricKeyRc4)
 		if err != nil || data == nil {
 			return entity.Encrypt{}, err
 		}
@@ -188,7 +188,7 @@ func (us *encryptService) CreateEncrypt(ctx *gin.Context, encryptDTO dto.Encrypt
 		}
 
 	} else if encryptMethod == "DES" {
-		encrypten_name, data, err := encrypt.DESEncrypt(encryptDTO.Name)
+		encrypten_name, data, err := encrypt.DESEncrypt(encryptDTO.Name, user.SymmetricKeyDes)
 		if err != nil || data == nil {
 			return entity.Encrypt{}, err
 		}
@@ -201,7 +201,7 @@ func (us *encryptService) CreateEncrypt(ctx *gin.Context, encryptDTO dto.Encrypt
 		if err != nil || data == nil {
 			return entity.Encrypt{}, err
 		}
-		encrypten_phone, data, err := encrypt.DESEncrypt(encryptDTO.PhoneNumber)
+		encrypten_phone, data, err := encrypt.DESEncrypt(encryptDTO.PhoneNumber, user.SymmetricKeyDes)
 		if err != nil || data == nil {
 			return entity.Encrypt{}, err
 		}
@@ -215,7 +215,7 @@ func (us *encryptService) CreateEncrypt(ctx *gin.Context, encryptDTO dto.Encrypt
 			return entity.Encrypt{}, err
 		}
 
-		encrypted_path_idcard, data, err := encrypt.DESEncrypt(IDCardPath)
+		encrypted_path_idcard, data, err := encrypt.DESEncrypt(IDCardPath, user.SymmetricKeyDes)
 		if err != nil || data == nil {
 			return entity.Encrypt{}, err
 		}
@@ -229,7 +229,7 @@ func (us *encryptService) CreateEncrypt(ctx *gin.Context, encryptDTO dto.Encrypt
 			return entity.Encrypt{}, err
 		}
 
-		encrypted_path_cv, data, err := encrypt.DESEncrypt(CVPath)
+		encrypted_path_cv, data, err := encrypt.DESEncrypt(CVPath, user.SymmetricKeyDes)
 		if err != nil || data == nil {
 			return entity.Encrypt{}, err
 		}
@@ -243,7 +243,7 @@ func (us *encryptService) CreateEncrypt(ctx *gin.Context, encryptDTO dto.Encrypt
 			return entity.Encrypt{}, err
 		}
 
-		encrypted_path_video, data, err := encrypt.DESEncrypt(VideoPath)
+		encrypted_path_video, data, err := encrypt.DESEncrypt(VideoPath, user.SymmetricKeyDes)
 		if err != nil || data == nil {
 			return entity.Encrypt{}, err
 		}
@@ -313,23 +313,23 @@ func (us *encryptService) GetAllEncrypt(ctx context.Context, userID uuid.UUID) (
 			datas[i].CVUrl = decrypt_cv
 			datas[i].VideoUrl = decrypt_video
 		} else if data.EncryptMethod == "RC4" {
-			decrypt_name, err := encrypt.RC4Decrypt(data.Name)
+			decrypt_name, err := encrypt.RC4Decrypt(data.Name, user.SymmetricKeyRc4)
 			if err != nil {
 				return nil, err
 			}
-			decrypt_phone, err := encrypt.RC4Decrypt(data.PhoneNumber)
+			decrypt_phone, err := encrypt.RC4Decrypt(data.PhoneNumber, user.SymmetricKeyRc4)
 			if err != nil {
 				return nil, err
 			}
-			decrypt_idcard, err := encrypt.RC4Decrypt(data.IDCardUrl)
+			decrypt_idcard, err := encrypt.RC4Decrypt(data.IDCardUrl, user.SymmetricKeyRc4)
 			if err != nil {
 				return nil, err
 			}
-			decrypt_cv, err := encrypt.RC4Decrypt(data.CVUrl)
+			decrypt_cv, err := encrypt.RC4Decrypt(data.CVUrl, user.SymmetricKeyRc4)
 			if err != nil {
 				return nil, err
 			}
-			decrypt_video, err := encrypt.RC4Decrypt(data.VideoUrl)
+			decrypt_video, err := encrypt.RC4Decrypt(data.VideoUrl, user.SymmetricKeyRc4)
 			if err != nil {
 				return nil, err
 			}
@@ -340,23 +340,23 @@ func (us *encryptService) GetAllEncrypt(ctx context.Context, userID uuid.UUID) (
 			datas[i].VideoUrl = decrypt_video
 
 		} else if data.EncryptMethod == "DES" {
-			decrypt_name, err := encrypt.DESDecrypt(data.Name)
+			decrypt_name, err := encrypt.DESDecrypt(data.Name, user.SymmetricKeyDes)
 			if err != nil {
 				return nil, err
 			}
-			decrypt_phone, err := encrypt.DESDecrypt(data.PhoneNumber)
+			decrypt_phone, err := encrypt.DESDecrypt(data.PhoneNumber, user.SymmetricKeyDes)
 			if err != nil {
 				return nil, err
 			}
-			decrypt_idcard, err := encrypt.DESDecrypt(data.IDCardUrl)
+			decrypt_idcard, err := encrypt.DESDecrypt(data.IDCardUrl, user.SymmetricKeyDes)
 			if err != nil {
 				return nil, err
 			}
-			decrypt_cv, err := encrypt.DESDecrypt(data.CVUrl)
+			decrypt_cv, err := encrypt.DESDecrypt(data.CVUrl, user.SymmetricKeyDes)
 			if err != nil {
 				return nil, err
 			}
-			decrypt_video, err := encrypt.DESDecrypt(data.VideoUrl)
+			decrypt_video, err := encrypt.DESDecrypt(data.VideoUrl, user.SymmetricKeyDes)
 			if err != nil {
 				return nil, err
 			}
