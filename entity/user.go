@@ -1,9 +1,10 @@
 package entity
 
 import (
-	"gin-gorm-clean-template/helpers"
+	// "gin-gorm-clean-template/helpers"
 
 	"github.com/google/uuid"
+	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 )
 
@@ -22,9 +23,10 @@ type User struct {
 
 func (u *User) BeforeCreate(tx *gorm.DB) error {
 	var err error
-	u.Password, err = helpers.HashPassword(u.Password)
+	bytes, err := bcrypt.GenerateFromPassword([]byte(u.Password), 4)
 	if err != nil {
 		return err
 	}
+	u.Password = string(bytes)
 	return nil
 }

@@ -7,6 +7,7 @@ import (
 	"crypto/x509"
 	"encoding/base64"
 	"encoding/pem"
+	"errors"
 
 	"golang.org/x/crypto/ssh"
 )
@@ -56,4 +57,38 @@ func DecryptRSA(data, priv string) string {
 		panic(err)
 	}
 	return string(decrypted)
+}
+
+func ParsePrivateKeyFromPEM(keyPEM string) (*rsa.PrivateKey, error) {
+	block, _ := pem.Decode([]byte(keyPEM))
+	if block == nil || block.Type != "RSA PRIVATE KEY" {
+		return nil, errors.New("failed to decode PEM block containing private key")
+	}
+
+	privateKey, err := x509.ParsePKCS1PrivateKey(block.Bytes)
+	if err != nil {
+		return nil, err
+	}
+
+	return privateKey, nil
+}
+
+func ParsePublicKeyFromPEM(pemData string) (*rsa.PublicKey, error) {
+	block, _ := pem.Decode([]byte(pemData))
+	if block == nil || block.Type != "RSA PUBLIC KEY" {
+		return nil, errors.New("failed to decode PEM block containing public key")
+	}
+
+	publicKeyInterface, err := x509.ParsePKIXPublicKey(block.Bytes)
+	if err != nil {
+		return nil, err
+	}
+
+	// Assert that the parsed key is an RSA public key
+	publicKey, ok := publicKeyInterface.(*rsa.PublicKey)
+	if !ok {
+		return nil, errors.New("parsed key is not an RSA public key")
+	}
+
+	return publicKey, nil
 }
