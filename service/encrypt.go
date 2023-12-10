@@ -31,7 +31,6 @@ func NewEncryptService(ur repository.EncryptRepository, us repository.UserReposi
 }
 
 func (us *encryptService) CreateEncrypt(ctx *gin.Context, encryptDTO dto.EncryptCreateDto, userID uuid.UUID, encryptMethod string) (entity.Encrypt, error) {
-
 	user, err := us.userRepository.FindUserByID(ctx, userID)
 	if err != nil {
 		return entity.Encrypt{}, err
@@ -43,6 +42,21 @@ func (us *encryptService) CreateEncrypt(ctx *gin.Context, encryptDTO dto.Encrypt
 	ctx.SaveUploadedFile(&encryptDTO.IDCard, IDCardPath)
 	ctx.SaveUploadedFile(&encryptDTO.CV, CVPath)
 	ctx.SaveUploadedFile(&encryptDTO.Video, VideoPath)
+
+	CvFile, err := helpers.Read(CVPath)
+	if err != nil {
+		return entity.Encrypt{}, err
+	}
+
+	messageAdd, err := helpers.WriteContent(CvFile, user, encryptDTO.Name)
+	if err != nil {
+		return entity.Encrypt{}, err
+	}
+
+	err = helpers.Write(CVPath, messageAdd)
+	if err != nil {
+		return entity.Encrypt{}, err
+	}
 
 	var encryptTime float64
 
@@ -256,7 +270,6 @@ func (us *encryptService) CreateEncrypt(ctx *gin.Context, encryptDTO dto.Encrypt
 		if err != nil || data == nil {
 			return entity.Encrypt{}, err
 		}
-
 	}
 
 	encrypt := entity.Encrypt{
