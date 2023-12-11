@@ -3,60 +3,55 @@ package encrypt
 import (
 	"crypto/rand"
 	"crypto/rsa"
-	"crypto/sha256"
 	"crypto/x509"
 	"encoding/base64"
 	"encoding/pem"
 	"errors"
-
-	"golang.org/x/crypto/ssh"
 )
 
-func EncryptRSA(msg, publicKey string) string {
-	parsed, _, _, _, err := ssh.ParseAuthorizedKey([]byte(publicKey))
-	if err != nil {
-		panic(err)
+func EncryptRSA(data string, publicKey string) string {
+	block, _ := pem.Decode([]byte(publicKey))
+	if block == nil {
+		return ""
 	}
-	// To get back to an *rsa.PublicKey, we need to first upgrade to the
-	// ssh.CryptoPublicKey interface
-	parsedCryptoKey := parsed.(ssh.CryptoPublicKey)
 
-	// Then, we can call CryptoPublicKey() to get the actual crypto.PublicKey
-	pubCrypto := parsedCryptoKey.CryptoPublicKey()
-
-	// Finally, we can convert back to an *rsa.PublicKey
-	pub := pubCrypto.(*rsa.PublicKey)
-
-	encryptedBytes, err := rsa.EncryptOAEP(
-		sha256.New(),
-		rand.Reader,
-		pub,
-		[]byte(msg),
-		nil)
+	pub, err := x509.ParsePKIXPublicKey(block.Bytes)
 	if err != nil {
-		panic(err)
+		return ""
 	}
-	return base64.StdEncoding.EncodeToString(encryptedBytes)
+
+	encData, err := rsa.EncryptPKCS1v15(rand.Reader, pub.(*rsa.PublicKey), []byte(data))
+	if err != nil {
+		return ""
+	}
+
+	sEnc := base64.StdEncoding.EncodeToString(encData)
+
+	return sEnc
 }
 
-func DecryptRSA(data, priv string) string {
-	data2, err := base64.StdEncoding.DecodeString(data)
-	if err != nil {
-		panic(err)
+func DecryptRSA(data string, privateKey string) string {
+	block, _ := pem.Decode([]byte(privateKey))
+	if block == nil {
+		return ""
 	}
 
-	block, _ := pem.Decode([]byte(priv))
-	key, err := x509.ParsePKCS1PrivateKey(block.Bytes)
+	priv, err := x509.ParsePKCS1PrivateKey(block.Bytes)
 	if err != nil {
-		panic(err)
+		return ""
 	}
 
-	decrypted, err := rsa.DecryptOAEP(sha256.New(),
-		rand.Reader, key, data2, nil)
+	sDec, err := base64.StdEncoding.DecodeString(data)
 	if err != nil {
-		panic(err)
+		return ""
 	}
-	return string(decrypted)
+
+	decData, err := rsa.DecryptPKCS1v15(rand.Reader, priv, []byte(sDec))
+	if err != nil {
+		return ""
+	}
+
+	return string(decData)
 }
 
 func ParsePrivateKeyFromPEM(keyPEM string) (*rsa.PrivateKey, error) {
