@@ -5,53 +5,46 @@ import (
 	"crypto/rsa"
 	"crypto/x509"
 	"encoding/pem"
-	"log"
-
-	"golang.org/x/crypto/ssh"
 )
 
-func GeneratePublicKey(privatekey *rsa.PublicKey) ([]byte, error) {
-	publicRsaKey, err := ssh.NewPublicKey(privatekey)
+func GeneratePublicKey(privateKey *rsa.PrivateKey) (string, error) {
+	publicKey := &privateKey.PublicKey
+	publicKeyBytes, err := x509.MarshalPKIXPublicKey(publicKey)
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 
-	pubKeyBytes := ssh.MarshalAuthorizedKey(publicRsaKey)
+	publicKeyPEM := pem.EncodeToMemory(&pem.Block{
+		Type:  "RSA PUBLIC KEY",
+		Bytes: publicKeyBytes,
+	})
 
-	log.Println("Public key generated")
-	return pubKeyBytes, nil
+	return string(publicKeyPEM), nil
 }
 
-func GeneratePrivateKey(bitSize int) (*rsa.PrivateKey, error) {
-	// Private Key generation
-	privateKey, err := rsa.GenerateKey(rand.Reader, bitSize)
+func GeneratePrivateKey() (string, *rsa.PrivateKey, error) {
+	privateKey, err := rsa.GenerateKey(rand.Reader, 2048)
 	if err != nil {
-		return nil, err
+		return "", nil, err
 	}
 
-	// Validate Private Key
-	err = privateKey.Validate()
-	if err != nil {
-		return nil, err
-	}
+	privateKeyBytes := x509.MarshalPKCS1PrivateKey(privateKey)
+	privateKeyPEM := pem.EncodeToMemory(&pem.Block{
+		Type:  "RSA PRIVATE KEY",
+		Bytes: privateKeyBytes,
+	})
 
-	log.Println("Private Key generated")
-	return privateKey, nil
+	return string(privateKeyPEM), privateKey, nil
 }
 
 func EncodePrivateKeyToPEM(privateKey *rsa.PrivateKey) []byte {
-	// Get ASN.1 DER format
 	privDER := x509.MarshalPKCS1PrivateKey(privateKey)
-
-	// pem.Block
 	privBlock := pem.Block{
 		Type:    "RSA PRIVATE KEY",
 		Headers: nil,
 		Bytes:   privDER,
 	}
 
-	// Private key in PEM format
 	privatePEM := pem.EncodeToMemory(&privBlock)
-
 	return privatePEM
 }

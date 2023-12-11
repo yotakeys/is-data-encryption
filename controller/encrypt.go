@@ -15,6 +15,7 @@ type EncryptController interface {
 	CreateEncrypt(ctx *gin.Context)
 	GetAllEncrypt(ctx *gin.Context)
 	GetFile(ctx *gin.Context)
+	VerifyDigitalSignature(ctx *gin.Context)
 }
 
 type encryptController struct {
@@ -117,4 +118,32 @@ func (uc *encryptController) GetFile(ctx *gin.Context) {
 	}
 
 	ctx.File(filePath)
+}
+
+func (uc *encryptController) VerifyDigitalSignature(ctx *gin.Context) {
+	var req dto.VerifyDigitalSignatureRequest
+	if err := ctx.ShouldBind(&req); err != nil {
+		res := common.BuildErrorResponse("Gagal Memproses Request", err.Error(), common.EmptyObj{})
+		ctx.JSON(http.StatusBadRequest, res)
+		return
+	}
+
+	token := ctx.MustGet("token").(string)
+	userID, err := uc.jwtService.GetUserIDByToken(token)
+	if err != nil {
+		res := common.BuildErrorResponse("Gagal Memproses Request", err.Error(), common.EmptyObj{})
+		ctx.JSON(http.StatusBadRequest, res)
+		return
+	}
+
+	req.UserId = userID.String()
+	result, err := uc.encryptService.VerifyDigitalSignature(ctx, req)
+	if err != nil {
+		res := common.BuildErrorResponse("Gagal Memproses Request", err.Error(), common.EmptyObj{})
+		ctx.JSON(http.StatusBadRequest, res)
+		return
+	}
+
+	res := common.BuildResponse(true, "Berhasil Memproses Request", result)
+	ctx.JSON(http.StatusOK, res)
 }

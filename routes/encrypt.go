@@ -14,5 +14,6 @@ func EncryptRoutes(router *gin.Engine, EncryptController controller.EncryptContr
 		encryptRoutes.POST("", middleware.Authenticate(jwtService), EncryptController.CreateEncrypt)
 		encryptRoutes.GET("", middleware.Authenticate(jwtService), EncryptController.GetAllEncrypt)
 		encryptRoutes.GET("/file", EncryptController.GetFile)
+		encryptRoutes.POST("/verify_digital_signature", middleware.Authenticate(jwtService), EncryptController.VerifyDigitalSignature)
 	}
 }
