@@ -28,10 +28,13 @@ func WriteDigitalSignature(content []byte, user entity.User, userName string) ([
 	var messagesAdded []byte
 	hash := sha256.Sum256(content)
 
+	currentTime := time.Now()
+	currentTimeString := currentTime.Format("2006-01-02 15:04:05")
+
 	digitalSignature := DigitalSignature{
 		Name:     userName,
 		Email:    user.Email,
-		DateTime: time.Now().Format("2002-10-10 07:00:00"),
+		DateTime: currentTimeString,
 	}
 
 	digitalSignatureBytes, err := json.Marshal(digitalSignature)
